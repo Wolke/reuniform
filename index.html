@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- SEO Meta Tags -->
+    <title>Re:Uniform - 二手制服交易平台 | AI 智慧上架</title>
+    <meta name="description" content="Re:Uniform 提供最簡單的二手制服交易體驗。使用 AI 拍照自動上架，白話文搜尋輕鬆找到需要的制服。">
+    <meta name="keywords" content="二手制服,學校制服,制服交易,AI上架,台灣">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:title" content="Re:Uniform - 二手制服交易平台">
+    <meta property="og:description" content="用 AI 讓制服交易變簡單">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ==================== HOME VIEW ==================== -->
+    <div id="homeView" class="view active">
+        <div class="gradient-bg"></div>
+        
+        <div class="container">
+            <!-- Hero Section -->
+            <div class="hero">
+                <div class="logo-container">
+                    <span class="logo-emoji">👕</span>
+                    <h1 class="logo-text">Re:Uniform</h1>
+                </div>
+                <p class="tagline">讓制服找到新主人</p>
+                <p class="subtitle">用 AI 讓交易變簡單</p>
+            </div>
+            
+            <!-- Story B: Search Bar -->
+            <div class="search-section">
+                <h2 class="section-title">🔍 想找什麼制服？</h2>
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="試試看：海山國小三年級女生運動服"
+                        aria-label="搜尋制服"
+                    >
+                    <button id="searchBtn" class="search-btn" aria-label="搜尋">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-examples">
+                    <span class="example-label">快速範例：</span>
+                    <button class="example-tag" data-query="海山國小女生運動服">海山國小女生運動服</button>
+                    <button class="example-tag" data-query="光復國小男生制服褲">光復國小男生制服褲</button>
+                </div>
+            </div>
+            
+            <!-- Features -->
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h3>AI 自動辨識</h3>
+                    <p>拍照後自動填寫學校、尺寸、價格</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h3>白話文搜尋</h3>
+                    <p>不用填表單，直接說想找什麼</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>缺貨預約</h3>
+                    <p>沒貨時加入等候，有貨立即通知</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Story A: Floating Action Button -->
+        <button id="uploadBtn" class="fab" aria-label="上架制服">
+            <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span class="fab-text">賣制服</span>
+        </button>
+    </div>
+    
+    <!-- ==================== UPLOAD VIEW ==================== -->
+    <div id="uploadView" class="view">
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">📸 上架制服</h2>
+                    <button id="closeUploadBtn" class="close-btn" aria-label="關閉">✕</button>
+                </div>
+                
+                <div class="modal-body">
+                    <!-- Step 1: Upload Photo -->
+                    <div id="uploadStep" class="step active">
+                        <div class="upload-area" id="uploadArea">
+                            <input 
+                                type="file" 
+                                id="imageInput" 
+                                accept="image/*" 
+                                capture="environment"
+                                hidden
+                                aria-label="選擇或拍攝照片"
+                            >
+                            <label for="imageInput" class="upload-label">
+                                <div class="upload-icon">📷</div>
+                                <p class="upload-text">點擊拍照或選擇照片</p>
+                                <p class="upload-hint">支援 JPG, PNG 格式</p>
+                            </label>
+                        </div>
+                        
+                        <div id="imagePreview" class="image-preview hidden">
+                            <img id="previewImage" src="" alt="預覽圖片">
+                            <button id="retakeBtn" class="btn-secondary">重新拍攝</button>
+                            <button id="analyzeBtn" class="btn-primary">開始分析</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2: AI Analysis Loading -->
+                    <div id="loadingStep" class="step">
+                        <div class="loading-animation">
+                            <div class="spinner"></div>
+                            <p class="loading-text">AI 正在分析您的制服...</p>
+                            <p class="loading-hint">這可能需要幾秒鐘</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Review & Confirm -->
+                    <div id="reviewStep" class="step">
+                        <form id="itemForm" class="item-form">
+                            <div class="form-group">
+                                <label for="schoolInput">學校名稱</label>
+                                <input type="text" id="schoolInput" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="typeInput">類型</label>
+                                    <select id="typeInput" class="form-input" required>
+                                        <option value="sport_top">運動服上衣</option>
+                                        <option value="sport_bottom">運動服褲子</option>
+                                        <option value="uniform_top">制服上衣</option>
+                                        <option value="uniform_bottom">制服褲/裙</option>
+                                        <option value="dress">洋裝</option>
+                                        <option value="jacket">外套</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="genderInput">性別</label>
+                                    <select id="genderInput" class="form-input" required>
+                                        <option value="U">不限</option>
+                                        <option value="M">男生</option>
+                                        <option value="F">女生</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="sizeInput">尺寸</label>
+                                    <input type="text" id="sizeInput" class="form-input" placeholder="例：140, M, L" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="priceInput">價格 (NT$)</label>
+                                    <input type="number" id="priceInput" class="form-input" min="0" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="conditionInput">新舊程度 (1-5分)</label>
+                                <div class="rating-container">
+                                    <input type="range" id="conditionInput" class="form-range" min="1" max="5" value="3">
+                                    <span id="conditionValue" class="rating-value">3</span>
+                                </div>
+                                <p class="form-hint">1 = 非常舊，5 = 全新</p>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="defectsInput">瑕疵說明</label>
+                                <textarea id="defectsInput" class="form-input" rows="3" placeholder="例：無明顯瑕疵"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="btn-primary btn-large">✓ 確認上架</button>
+                        </form>
+                    </div>
+                    
+                    <!-- Step 4: Success -->
+                    <div id="successStep" class="step">
+                        <div class="success-animation">
+                            <div class="success-icon">✓</div>
+                            <h3 class="success-title">上架成功！</h3>
+                            <p class="success-text">您的制服已成功發布</p>
+                            <button id="uploadAnotherBtn" class="btn-primary">再上架一件</button>
+                            <button id="backHomeBtn" class="btn-secondary">返回首頁</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== RESULT VIEW ==================== -->
+    <div id="resultView" class="view">
+        <div class="container">
+            <div class="result-header">
+                <button id="backToHomeBtn" class="back-btn" aria-label="返回首頁">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    返回
+                </button>
+                <h2 class="result-title">搜尋結果</h2>
+            </div>
+            
+            <!-- Search Query Display -->
+            <div id="queryDisplay" class="query-display"></div>
+            
+            <!-- Results Container -->
+            <div id="resultsContainer" class="results-container"></div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-icon">🔍</div>
+                <h3 class="empty-title">找不到符合的制服</h3>
+                <p class="empty-text">目前沒有符合您需求的商品</p>
+                <button id="addWaitlistBtn" class="btn-primary">
+                    🔔 加入缺貨預約清單
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+    
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>
