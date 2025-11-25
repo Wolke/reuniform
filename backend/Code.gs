@@ -4,8 +4,8 @@
  */
 
 // ==================== 設定區 ====================
-const GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+const OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
+const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 // Sheet 名稱
 const SHEET_ITEMS = "Items";
@@ -93,7 +93,7 @@ function uploadItem(params) {
     // 移除 data:image/xxx;base64, 前綴（如果有的話）
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     
-    // 呼叫 Gemini Vision API 分析圖片
+    // 呼叫 OpenAI Vision API 分析圖片
     const aiResult = analyzeUniformImage(base64Data);
     
     if (!aiResult) {
@@ -111,7 +111,8 @@ function uploadItem(params) {
       aiResult.type || "unknown",
       aiResult.gender || "U",
       aiResult.size || "M",
-      aiResult.suggested_price || 100,
+      aiResult.size || "M",
+      aiResult.suggested_conditions || "可議", // 原本是 price
       aiResult.condition || 3,
       aiResult.defects || "無",
       "published",
@@ -130,7 +131,7 @@ function uploadItem(params) {
         type: aiResult.type,
         gender: aiResult.gender,
         size: aiResult.size,
-        price: aiResult.suggested_price,
+        conditions: aiResult.suggested_conditions,
         condition: aiResult.condition,
         defects: aiResult.defects
       }
@@ -143,7 +144,7 @@ function uploadItem(params) {
 }
 
 /**
- * analyzeUniformImage - 使用 Gemini Vision API 分析制服圖片
+ * analyzeUniformImage - 使用 OpenAI Vision API 分析制服圖片
  * @param {string} base64Image - Base64 編碼的圖片
  * @returns {Object} 分析結果
  */
@@ -158,48 +159,55 @@ function analyzeUniformImage(base64Image) {
   "size": "尺寸（例如：130/140/150/S/M/L）",
   "condition": "新舊程度1-5分（5為全新）",
   "defects": "瑕疵描述（若無則填'無明顯瑕疵'）",
-  "suggested_price": "建議售價（新台幣，數字）"
+  "suggested_conditions": "建議交換條件（例如：免費、換飲料、100元，預設為'可議'）"
 }
 
 請根據圖片內容盡可能準確判斷，若無法確定某項資訊，請給予合理推測。`;
 
     const payload = {
-      contents: [{
-        parts: [
-          { text: prompt },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: base64Image
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${base64Image}`
+              }
             }
-          }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.4,
-        topK: 32,
-        topP: 1,
-        maxOutputTokens: 1024,
-      }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 1024
     };
     
     const options = {
       method: "post",
       contentType: "application/json",
+      headers: {
+        "Authorization": "Bearer " + OPENAI_API_KEY
+      },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
     
-    const response = UrlFetchApp.fetch(GEMINI_API_URL + "?key=" + GEMINI_API_KEY, options);
-    const result = JSON.parse(response.getContentText());
+    const response = UrlFetchApp.fetch(OPENAI_API_URL, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
     
-    if (result.candidates && result.candidates.length > 0) {
-      const text = result.candidates[0].content.parts[0].text;
-      // 提取 JSON（移除可能的 markdown 格式）
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
+    if (responseCode !== 200) {
+      Logger.log("OpenAI API Error: " + responseText);
+      return null;
+    }
+
+    const result = JSON.parse(responseText);
+    
+    if (result.choices && result.choices.length > 0) {
+      const content = result.choices[0].message.content;
+      return JSON.parse(content);
     }
     
     return null;
@@ -224,7 +232,7 @@ function searchItems(params) {
       return { status: "error", message: "請輸入搜尋內容" };
     }
     
-    // 使用 Gemini NLP 解析搜尋意圖
+    // 使用 OpenAI NLP 解析搜尋意圖
     const intent = parseSearchIntent(query);
     
     if (!intent) {
@@ -246,7 +254,7 @@ function searchItems(params) {
         type: row[3],
         gender: row[4],
         size: row[5],
-        price: row[6],
+        conditions: row[6], // 原本是 price
         condition_score: row[7],
         defects: row[8],
         status: row[9],
@@ -254,7 +262,7 @@ function searchItems(params) {
       };
       
       // 只搜尋已發布的商品
-      if (item.status !== "published") continue;
+      if (item.status !== "published" && item.status !== true) continue;
       
       // 簡單的篩選邏輯
       let match = true;
@@ -263,11 +271,13 @@ function searchItems(params) {
         match = false;
       }
       
-      if (intent.type && item.type !== intent.type) {
+      // 類型比對 (支援部分匹配，例如 "運動服" 可以匹配 "運動服上衣")
+      if (intent.type && item.type.indexOf(intent.type) === -1) {
         match = false;
       }
       
-      if (intent.gender && item.gender !== intent.gender && item.gender !== 'U') {
+      // 性別比對
+      if (intent.gender && item.gender !== intent.gender && item.gender !== '不拘' && item.gender !== 'U') {
         match = false;
       }
       
@@ -291,7 +301,7 @@ function searchItems(params) {
 }
 
 /**
- * parseSearchIntent - 使用 Gemini NLP 解析搜尋意圖
+ * parseSearchIntent - 使用 OpenAI NLP 解析搜尋意圖
  * @param {string} query - 使用者搜尋的白話文
  * @returns {Object} 解析結果
  */
@@ -304,41 +314,46 @@ function parseSearchIntent(query) {
 請回傳 JSON 格式：
 {
   "school": "學校名稱（提取關鍵字，例如：海山國小）",
-  "type": "制服類型（sport_top/sport_bottom/uniform_top/uniform_bottom/dress/jacket，若未提及則為null）",
-  "gender": "性別（M/F/U，若未提及則為null）",
+  "type": "制服類型（請使用中文：運動服/制服/裙子/外套，若使用者未明確指定特定類型，請務必回傳 null，切勿預設）",
+  "gender": "性別（請使用中文：男/女/不拘，若未提及則為null）",
   "size_approx": "大約尺寸（例如：130-140，若未提及則為null）"
 }
 
 只回傳 JSON，不要其他說明。`;
 
     const payload = {
-      contents: [{
-        parts: [{ text: prompt }]
-      }],
-      generationConfig: {
-        temperature: 0.3,
-        topK: 32,
-        topP: 1,
-        maxOutputTokens: 512,
-      }
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3
     };
     
     const options = {
       method: "post",
       contentType: "application/json",
+      headers: {
+        "Authorization": "Bearer " + OPENAI_API_KEY
+      },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
     
-    const response = UrlFetchApp.fetch(GEMINI_API_URL + "?key=" + GEMINI_API_KEY, options);
-    const result = JSON.parse(response.getContentText());
+    const response = UrlFetchApp.fetch(OPENAI_API_URL, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
     
-    if (result.candidates && result.candidates.length > 0) {
-      const text = result.candidates[0].content.parts[0].text;
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
+    if (responseCode !== 200) {
+      Logger.log("OpenAI API Error: " + responseText);
+      return null;
+    }
+
+    const result = JSON.parse(responseText);
+    
+    if (result.choices && result.choices.length > 0) {
+      const content = result.choices[0].message.content;
+      return JSON.parse(content);
     }
     
     return null;
@@ -422,7 +437,7 @@ function getRecentItems() {
           type: row[3],
           gender: row[4],
           size: row[5],
-          price: row[6],
+          conditions: row[6], // 原本是 price
           condition_score: row[7],
           defects: row[8],
           created_at: row[11]
@@ -478,3 +493,40 @@ function getRecentWaitlist() {
     return { status: "error", message: error.toString() };
   }
 }
+
+// ==================== 測試功能 ====================
+
+function testFullFlow() {
+  Logger.log("=== Checking API Key ===");
+  if (!OPENAI_API_KEY) {
+    Logger.log("ERROR: OPENAI_API_KEY is not set! Please check Script Properties.");
+  } else {
+    Logger.log("OPENAI_API_KEY is set (Length: " + OPENAI_API_KEY.length + ")");
+  }
+
+  Logger.log("\n=== 1. Testing Dashboard Data (Recent Items) ===");
+  const recentItems = getRecentItems();
+  Logger.log("Recent Items Count: " + (recentItems.data ? recentItems.data.length : 0));
+  if (recentItems.data && recentItems.data.length > 0) {
+    Logger.log("First Item: " + JSON.stringify(recentItems.data[0]));
+  }
+
+  Logger.log("\n=== 2. Testing Dashboard Data (Waitlist) ===");
+  const recentWaitlist = getRecentWaitlist();
+  Logger.log("Waitlist Count: " + (recentWaitlist.data ? recentWaitlist.data.length : 0));
+
+  Logger.log("\n=== 3. Testing Search (Query: '海山國小女生') ===");
+  const searchResult = searchItems({ query: "海山國小女生" });
+  Logger.log("Search Status: " + searchResult.status);
+  if (searchResult.status === "success") {
+    Logger.log("Intent Parsed: " + JSON.stringify(searchResult.intent));
+    Logger.log("Results Found: " + searchResult.results.length);
+    if (searchResult.results.length > 0) {
+      Logger.log("First Match: " + JSON.stringify(searchResult.results[0]));
+    }
+  } else {
+    Logger.log("Search Failed: " + searchResult.message);
+  }
+}
+
+

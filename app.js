@@ -1,5 +1,5 @@
 // ==================== Configuration ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbzD2wia6eszAHwSLrR44Y4oTs1lQFKUxOYfgVsa-1UKkr39KTI34d-xAYiXN-JDBtHTxA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzdP5Gn3QZZ3DBHZnCrzVnkw8UuGwN0FwH5zlZP8bQ3iFvehCKQH_MQNdyoaVl_ttMJ/exec";
 const MOCK_USER_ID = "user_001"; // Mock User for testing
 
 // ==================== State Management ====================
@@ -167,11 +167,11 @@ async function handleAnalyze() {
             document.getElementById('schoolInput').value = result.data.school || '';
             document.getElementById('typeInput').value = result.data.type || 'sport_top';
             document.getElementById('genderInput').value = result.data.gender || 'U';
-            document.getElementById('sizeInput').value = result.data.size || '';
-            document.getElementById('priceInput').value = result.data.price || 100;
-            document.getElementById('conditionInput').value = result.data.condition || 3;
+            document.getElementById('itemSize').value = result.data.size || '';
+            document.getElementById('itemConditions').value = result.data.conditions || '';
+            document.getElementById('itemCondition').value = result.data.condition || 3;
             document.getElementById('conditionValue').textContent = result.data.condition || 3;
-            document.getElementById('defectsInput').value = result.data.defects || '無';
+            document.getElementById('itemDefects').value = result.data.defects || '無';
 
             showStep('reviewStep');
             showToast('AI 分析完成！請檢查資料', 'success');
@@ -385,6 +385,10 @@ function renderWaitlist(requests) {
             <div class="result-meta mb-2">
                 <span class="meta-tag">${getTypeName(req.type)}</span>
                 <span class="meta-tag">需求尺寸: ${escapeHtml(req.size)}</span>
+            </div>
+            <div class="flex justify-between items-center mt-3">
+                <span class="text-primary font-bold">${escapeHtml(req.conditions || '可議')}</span>
+                <button class="text-sm text-gray-500 hover:text-primary">查看詳情</button>
             </div>
             <div class="text-sm text-gray-400 text-right">
                 <span>${new Date(req.created_at).toLocaleDateString()}</span>
