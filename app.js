@@ -272,7 +272,7 @@ function displaySearchResults(results, suggestWaitlist) {
                 <span class="meta-tag">狀況: ${item.condition_score}/5</span>
             </div>
             <p class="text-sm text-gray-400">瑕疵：${escapeHtml(item.defects)}</p>
-            <p class="result-price">NT$ ${item.price}</p>
+            <p class="result-price text-primary font-bold">${escapeHtml(item.conditions || '可議')}</p>
         </div>
     `).join('');
 
@@ -357,7 +357,7 @@ function renderRecentItems(items) {
         <div class="result-card">
             <div class="flex justify-between items-start">
                 <h3 class="text-lg font-bold text-white mb-1">${escapeHtml(item.school)}</h3>
-                <span class="text-accent font-bold">NT$ ${item.price}</span>
+                <span class="text-accent font-bold">${escapeHtml(item.conditions || '可議')}</span>
             </div>
             <div class="result-meta mb-2">
                 <span class="meta-tag">${getTypeName(item.type)}</span>
