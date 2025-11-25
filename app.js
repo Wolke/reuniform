@@ -1,5 +1,5 @@
 // ==================== Configuration ====================
-const API_URL = "YOUR_GAS_WEB_APP_URL_HERE"; // 請替換為您的 Google Apps Script Web App URL
+const API_URL = "https://script.google.com/macros/s/AKfycby_LIGfhGSyb2a0DeTWUSLcEKnnBNYqKzuDEeJre_B9QTLJB82U4RhPrBi04-znU3O66w/exec"; // 請替換為您的 Google Apps Script Web App URL
 const MOCK_USER_ID = "user_001"; // Mock User for testing
 
 // ==================== State Management ====================
@@ -26,7 +26,7 @@ function showToast(message, type = 'success') {
     const toast = document.getElementById('toast');
     toast.textContent = message;
     toast.className = `toast ${type} show`;
-    
+
     setTimeout(() => {
         toast.classList.remove('show');
     }, 3000);
@@ -38,12 +38,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initializeEventListeners() {
+    // Load dashboard data
+    fetchRecentData();
+
     // Search functionality
     document.getElementById('searchBtn').addEventListener('click', handleSearch);
     document.getElementById('searchInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch();
     });
-    
+
     // Example tags
     document.querySelectorAll('.example-tag').forEach(tag => {
         tag.addEventListener('click', (e) => {
@@ -52,47 +55,47 @@ function initializeEventListeners() {
             handleSearch();
         });
     });
-    
+
     // Upload flow
     document.getElementById('uploadBtn').addEventListener('click', () => {
         showView('uploadView');
         resetUploadFlow();
     });
-    
+
     document.getElementById('closeUploadBtn').addEventListener('click', () => {
         showView('homeView');
     });
-    
+
     document.getElementById('imageInput').addEventListener('change', handleImageSelect);
     document.getElementById('retakeBtn').addEventListener('click', () => {
         document.getElementById('imagePreview').classList.add('hidden');
         document.getElementById('uploadArea').style.display = 'block';
         currentImageBase64 = null;
     });
-    
+
     document.getElementById('analyzeBtn').addEventListener('click', handleAnalyze);
-    
+
     // Form
     document.getElementById('itemForm').addEventListener('submit', handleSubmitItem);
     document.getElementById('conditionInput').addEventListener('input', (e) => {
         document.getElementById('conditionValue').textContent = e.target.value;
     });
-    
+
     // Success flow
     document.getElementById('uploadAnotherBtn').addEventListener('click', () => {
         resetUploadFlow();
         showStep('uploadStep');
     });
-    
+
     document.getElementById('backHomeBtn').addEventListener('click', () => {
         showView('homeView');
     });
-    
+
     // Result view
     document.getElementById('backToHomeBtn').addEventListener('click', () => {
         showView('homeView');
     });
-    
+
     document.getElementById('addWaitlistBtn').addEventListener('click', handleAddToWaitlist);
 }
 
@@ -110,24 +113,24 @@ function resetUploadFlow() {
 function handleImageSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     // Validate file type
     if (!file.type.startsWith('image/')) {
         showToast('請選擇圖片檔案', 'error');
         return;
     }
-    
+
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
         showToast('圖片檔案過大，請選擇小於 5MB 的圖片', 'error');
         return;
     }
-    
+
     // Convert to base64
     const reader = new FileReader();
     reader.onload = (event) => {
         currentImageBase64 = event.target.result;
-        
+
         // Show preview
         document.getElementById('previewImage').src = currentImageBase64;
         document.getElementById('uploadArea').style.display = 'none';
@@ -141,14 +144,14 @@ async function handleAnalyze() {
         showToast('請先選擇圖片', 'error');
         return;
     }
-    
+
     showStep('loadingStep');
-    
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'text/plain',
             },
             body: JSON.stringify({
                 action: 'uploadItem',
@@ -156,9 +159,9 @@ async function handleAnalyze() {
                 sellerId: MOCK_USER_ID
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             // Populate form with AI results
             document.getElementById('schoolInput').value = result.data.school || '';
@@ -169,7 +172,7 @@ async function handleAnalyze() {
             document.getElementById('conditionInput').value = result.data.condition || 3;
             document.getElementById('conditionValue').textContent = result.data.condition || 3;
             document.getElementById('defectsInput').value = result.data.defects || '無';
-            
+
             showStep('reviewStep');
             showToast('AI 分析完成！請檢查資料', 'success');
         } else {
@@ -185,12 +188,12 @@ async function handleAnalyze() {
 
 async function handleSubmitItem(e) {
     e.preventDefault();
-    
+
     showStep('loadingStep');
-    
+
     // Simulate a brief delay for better UX
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     showStep('successStep');
 }
 
@@ -198,18 +201,18 @@ async function handleSubmitItem(e) {
 
 async function handleSearch() {
     const query = document.getElementById('searchInput').value.trim();
-    
+
     if (!query) {
         showToast('請輸入搜尋內容', 'warning');
         return;
     }
-    
+
     showView('resultView');
     document.getElementById('queryDisplay').innerHTML = `
         <p class="text-sm text-gray-400">搜尋：</p>
         <p class="text-lg font-semibold">${escapeHtml(query)}</p>
     `;
-    
+
     // Show loading state
     document.getElementById('resultsContainer').innerHTML = `
         <div class="loading-animation">
@@ -218,21 +221,21 @@ async function handleSearch() {
         </div>
     `;
     document.getElementById('emptyState').classList.add('hidden');
-    
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'text/plain',
             },
             body: JSON.stringify({
                 action: 'searchItems',
                 query: query
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             currentSearchIntent = result.intent;
             displaySearchResults(result.results, result.suggestWaitlist);
@@ -250,15 +253,15 @@ async function handleSearch() {
 function displaySearchResults(results, suggestWaitlist) {
     const container = document.getElementById('resultsContainer');
     const emptyState = document.getElementById('emptyState');
-    
+
     if (results.length === 0) {
         container.innerHTML = '';
         emptyState.classList.remove('hidden');
         return;
     }
-    
+
     emptyState.classList.add('hidden');
-    
+
     const html = results.map(item => `
         <div class="result-card">
             <h3>${escapeHtml(item.school)}</h3>
@@ -272,7 +275,7 @@ function displaySearchResults(results, suggestWaitlist) {
             <p class="result-price">NT$ ${item.price}</p>
         </div>
     `).join('');
-    
+
     container.innerHTML = html;
 }
 
@@ -281,12 +284,12 @@ async function handleAddToWaitlist() {
         showToast('無法加入預約清單', 'error');
         return;
     }
-    
+
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'text/plain',
             },
             body: JSON.stringify({
                 action: 'addToWaitlist',
@@ -296,9 +299,9 @@ async function handleAddToWaitlist() {
                 requesterId: MOCK_USER_ID
             })
         });
-        
+
         const result = await response.json();
-        
+
         if (result.status === 'success') {
             showToast('已加入預約清單！有貨時會通知您', 'success');
             setTimeout(() => {
@@ -311,6 +314,83 @@ async function handleAddToWaitlist() {
         console.error('Error adding to waitlist:', error);
         showToast('網路錯誤', 'error');
     }
+}
+
+// ==================== Dashboard Logic ====================
+
+async function fetchRecentData() {
+    try {
+        // Fetch Recent Items
+        const itemsResponse = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'getRecentItems' })
+        });
+        const itemsResult = await itemsResponse.json();
+        if (itemsResult.status === 'success') {
+            renderRecentItems(itemsResult.data);
+        }
+
+        // Fetch Waitlist
+        const waitlistResponse = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'getRecentWaitlist' })
+        });
+        const waitlistResult = await waitlistResponse.json();
+        if (waitlistResult.status === 'success') {
+            renderWaitlist(waitlistResult.data);
+        }
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+    }
+}
+
+function renderRecentItems(items) {
+    const container = document.getElementById('recentItemsList');
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center">目前沒有上架商品</p>';
+        return;
+    }
+
+    container.innerHTML = items.map(item => `
+        <div class="result-card">
+            <div class="flex justify-between items-start">
+                <h3 class="text-lg font-bold text-white mb-1">${escapeHtml(item.school)}</h3>
+                <span class="text-accent font-bold">NT$ ${item.price}</span>
+            </div>
+            <div class="result-meta mb-2">
+                <span class="meta-tag">${getTypeName(item.type)}</span>
+                <span class="meta-tag">${getGenderName(item.gender)}</span>
+                <span class="meta-tag">${escapeHtml(item.size)}</span>
+            </div>
+            <div class="flex justify-between items-center text-sm text-gray-400">
+                <span>狀況: ${item.condition_score}/5</span>
+                <span>${new Date(item.created_at).toLocaleDateString()}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderWaitlist(requests) {
+    const container = document.getElementById('recentWaitlistList');
+    if (!requests || requests.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center">目前沒有徵求需求</p>';
+        return;
+    }
+
+    container.innerHTML = requests.map(req => `
+        <div class="result-card border-l-4 border-secondary">
+            <h3 class="text-lg font-bold text-white mb-1">${escapeHtml(req.school)}</h3>
+            <div class="result-meta mb-2">
+                <span class="meta-tag">${getTypeName(req.type)}</span>
+                <span class="meta-tag">需求尺寸: ${escapeHtml(req.size)}</span>
+            </div>
+            <div class="text-sm text-gray-400 text-right">
+                <span>${new Date(req.created_at).toLocaleDateString()}</span>
+            </div>
+        </div>
+    `).join('');
 }
 
 // ==================== Helper Functions ====================

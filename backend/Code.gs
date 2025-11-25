@@ -34,6 +34,12 @@ function doPost(e) {
       case "addToWaitlist":
         response = addToWaitlist(params);
         break;
+      case "getRecentItems":
+        response = getRecentItems();
+        break;
+      case "getRecentWaitlist":
+        response = getRecentWaitlist();
+        break;
       default:
         response = {
           status: "error",
@@ -382,5 +388,79 @@ function addToWaitlist(params) {
   } catch (error) {
     Logger.log("Error in addToWaitlist: " + error.toString());
     return { status: "error", message: "加入預約失敗: " + error.toString() };
+  }
+}
+
+// ==================== Dashboard Data ====================
+
+/**
+ * getRecentItems - 取得最新上架商品
+ */
+function getRecentItems() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
+    const data = sheet.getDataRange().getValues();
+    
+    // 跳過標題行
+    const items = [];
+    // 從最後一行開始往前讀取（最新的在後面）
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (items.length >= 10) break; // 只取前 10 筆
+      
+      const row = data[i];
+      if (row[9] === "published") { // 只取已發布
+        items.push({
+          id: row[0],
+          school: row[2],
+          type: row[3],
+          gender: row[4],
+          size: row[5],
+          price: row[6],
+          condition_score: row[7],
+          defects: row[8],
+          created_at: row[11]
+        });
+      }
+    }
+    
+    return {
+      status: "success",
+      data: items
+    };
+  } catch (error) {
+    return { status: "error", message: error.toString() };
+  }
+}
+
+/**
+ * getRecentWaitlist - 取得最新預約需求
+ */
+function getRecentWaitlist() {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_WAITLIST);
+    const data = sheet.getDataRange().getValues();
+    
+    const requests = [];
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (requests.length >= 10) break;
+      
+      const row = data[i];
+      if (row[5] === "active") {
+        requests.push({
+          id: row[0],
+          school: row[2],
+          type: row[3],
+          size: row[4],
+          created_at: row[6]
+        });
+      }
+    }
+    
+    return {
+      status: "success",
+      data: requests
+    };
+  } catch (error) {
+    return { status: "error", message: error.toString() };
   }
 }
