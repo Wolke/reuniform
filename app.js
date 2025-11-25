@@ -187,9 +187,16 @@ function renderItems(items, container) {
         return;
     }
 
-    container.innerHTML = items.map(item => `
+    container.innerHTML = items.map(item => {
+        const thumbContent = item.image
+            ? `<img src="${item.image}" style="width:100%; height:100%; object-fit:cover;">`
+            : `<div style="font-size: 2.5rem; line-height: 1;">${getTypeEmoji(item.type)}</div>`;
+
+        return `
         <div class="item-card">
-            <div class="item-thumb" style="background-color: ${stringToColor(item.school)}"></div>
+            <div class="item-thumb" style="background-color: ${stringToColor(item.school)}; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                ${thumbContent}
+            </div>
             <div class="item-info">
                 <div class="item-school">${escapeHtml(item.school)}</div>
                 <div class="item-meta">
@@ -202,8 +209,9 @@ function renderItems(items, container) {
                 <div class="item-conditions">${escapeHtml(item.conditions || '可議')}</div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
+
 
 function renderWaitlist(list, container) {
     if (!list || list.length === 0) {
@@ -369,6 +377,28 @@ function getTypeName(type) {
         'uniform_bottom': '制服褲/裙'
     };
     return map[type] || type;
+}
+
+function getTypeEmoji(type) {
+    const map = {
+        'sport_top_short': '👕',
+        'sport_top_long': '👕',
+        'sport_bottom_short': '🩳',
+        'sport_bottom_long': '👖',
+        'uniform_top_short': '👔',
+        'uniform_top_long': '👔',
+        'uniform_bottom_short': '🩳',
+        'uniform_bottom_long': '👖',
+        'uniform_skirt': '👗',
+        'dress': '👗',
+        'jacket': '🧥',
+        // Legacy support
+        'sport_top': '👕',
+        'sport_bottom': '🩳',
+        'uniform_top': '👔',
+        'uniform_bottom': '👖'
+    };
+    return map[type] || '👕';
 }
 
 function stringToColor(str) {
