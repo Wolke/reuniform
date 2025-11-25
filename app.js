@@ -108,6 +108,16 @@ function initEventListeners() {
 }
 
 // ==================== Router ====================
+function initRouter() {
+    // Simple hash-based routing or default to home
+    const hash = window.location.hash.slice(1);
+    if (hash && ['home', 'result'].includes(hash)) {
+        navigateTo(hash);
+    } else {
+        navigateTo('home');
+    }
+}
+
 function navigateTo(viewId) {
     state.currentView = viewId;
 
