@@ -351,12 +351,22 @@ function escapeHtml(text) {
 
 function getTypeName(type) {
     const map = {
+        'sport_top_short': '運動服短袖',
+        'sport_top_long': '運動服長袖',
+        'sport_bottom_short': '運動短褲',
+        'sport_bottom_long': '運動長褲',
+        'uniform_top_short': '制服短袖',
+        'uniform_top_long': '制服長袖',
+        'uniform_bottom_short': '制服短褲',
+        'uniform_bottom_long': '制服長褲',
+        'uniform_skirt': '制服裙',
+        'dress': '洋裝',
+        'jacket': '外套',
+        // Legacy support
         'sport_top': '運動服上衣',
         'sport_bottom': '運動褲',
         'uniform_top': '制服上衣',
-        'uniform_bottom': '制服褲/裙',
-        'dress': '洋裝',
-        'jacket': '外套'
+        'uniform_bottom': '制服褲/裙'
     };
     return map[type] || type;
 }

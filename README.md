@@ -122,7 +122,7 @@ git push -u origin main
 | id | 商品 ID |
 | seller_id | 賣家 ID |
 | school | 學校名稱 |
-| type | 類型（sport_top/uniform_bottom 等） |
+| type | 類型（sport_top_short/uniform_bottom_long 等） |
 | gender | 性別（M/F/U） |
 | size | 尺寸 |
 | conditions | 交換條件 |

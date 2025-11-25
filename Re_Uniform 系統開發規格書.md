@@ -102,7 +102,7 @@ const GEMINI\_API\_KEY \= "YOUR\_API\_KEY\_HERE"; // Replace with actual key
 * **Input**: { "action": "uploadItem", "imageBase64": "..." }  
 * **Logic**:  
   1. 呼叫 **Gemini 2.5 Flash (Vision)** 分析圖片。  
-  2. Prompt: "Analyze this school uniform. Return JSON with fields: school (Taiwanese school name), type (e.g. sport\_top), gender, size, condition (1-5), defects, suggested\_conditions."  
+  2. Prompt: "Analyze this school uniform. Return JSON with fields: school (Taiwanese school name), type (sport_top_short/sport_top_long/sport_bottom_short/sport_bottom_long/uniform_top_short/uniform_top_long/uniform_bottom_short/uniform_bottom_long/uniform_skirt/dress/jacket), gender, size, condition (1-5), defects, suggested_conditions."  
   3. 將 Gemini 回傳的 JSON 資料寫入 Items Sheet。  
 * **Output**: { "status": "success", "data": { ...item\_details } }
 

@@ -154,7 +154,7 @@ function analyzeUniformImage(base64Image) {
 
 {
   "school": "學校全名（例如：新北市板橋區海山國小）",
-  "type": "制服類型（sport_top/sport_bottom/uniform_top/uniform_bottom/dress/jacket）",
+  "type": "制服類型（sport_top_short/sport_top_long/sport_bottom_short/sport_bottom_long/uniform_top_short/uniform_top_long/uniform_bottom_short/uniform_bottom_long/uniform_skirt/dress/jacket）",
   "gender": "性別（M/F/U）",
   "size": "尺寸（例如：130/140/150/S/M/L）",
   "condition": "新舊程度1-5分（5為全新）",
@@ -314,7 +314,7 @@ function parseSearchIntent(query) {
 請回傳 JSON 格式：
 {
   "school": "學校名稱（提取關鍵字，例如：海山國小）",
-  "type": "制服類型（請使用中文：運動服/制服/裙子/外套，若使用者未明確指定特定類型，請務必回傳 null，切勿預設）",
+  "type": "制服類型（請使用中文：運動短袖/運動長袖/運動短褲/運動長褲/制服短袖/制服長袖/制服短褲/制服長褲/裙子/外套，若使用者未明確指定特定類型，請務必回傳 null，切勿預設）",
   "gender": "性別（請使用中文：男/女/不拘，若未提及則為null）",
   "size_approx": "大約尺寸（例如：130-140，若未提及則為null）"
 }
