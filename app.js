@@ -299,7 +299,7 @@ function resetUploadStep() {
 async function handleAnalyze() {
     if (!state.uploadImage) return showToast('請先選擇照片', 'error');
 
-    showStep('step-loading');
+    // showStep('step-loading');
 
     const res = await api.post('uploadItem', {
         imageBase64: state.uploadImage,
