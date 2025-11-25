@@ -5,7 +5,7 @@
 
 // ==================== Configuration ====================
 const CONFIG = {
-    API_URL: "https://script.google.com/macros/s/AKfycbwRjKXzkd7dNd8dkyKeobfE8DacmHp20z-Ubh14qUcliVmbNNhXW_Egh6IxwNlEUaq40Q/exec",
+    API_URL: "https://script.google.com/macros/s/AKfycbxTa6ZG-Q_UBbmvVe926T1-PTeyJprqGCjCv9sPb3zj4xBkhUab1Dsp556p9K9TG3Dq/exec",
     MOCK_USER_ID: "user_001"
 };
 

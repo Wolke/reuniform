@@ -111,7 +111,7 @@ function uploadItem(params) {
       aiResult.type || "unknown",
       aiResult.gender || "U",
       aiResult.size || "M",
-      aiResult.size || "M",
+
       aiResult.suggested_conditions || "可議", 
       aiResult.condition || 3,
       aiResult.defects || "無",
