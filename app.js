@@ -1,5 +1,5 @@
 // ==================== Configuration ====================
-const API_URL = "https://script.google.com/macros/s/AKfycby_LIGfhGSyb2a0DeTWUSLcEKnnBNYqKzuDEeJre_B9QTLJB82U4RhPrBi04-znU3O66w/exec"; // 請替換為您的 Google Apps Script Web App URL
+const API_URL = "https://script.google.com/macros/s/AKfycbzD2wia6eszAHwSLrR44Y4oTs1lQFKUxOYfgVsa-1UKkr39KTI34d-xAYiXN-JDBtHTxA/exec";
 const MOCK_USER_ID = "user_001"; // Mock User for testing
 
 // ==================== State Management ====================

@@ -4,7 +4,7 @@
  */
 
 // ==================== 設定區 ====================
-const GEMINI_API_KEY = "YOUR_API_KEY_HERE"; // 請替換為您的 Gemini API Key
+const GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 
 // Sheet 名稱
@@ -399,6 +399,10 @@ function addToWaitlist(params) {
 function getRecentItems() {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
+    if (!sheet) {
+      return { status: "error", message: "Items sheet not found" };
+    }
+    
     const data = sheet.getDataRange().getValues();
     
     // 跳過標題行
@@ -408,7 +412,10 @@ function getRecentItems() {
       if (items.length >= 10) break; // 只取前 10 筆
       
       const row = data[i];
-      if (row[9] === "published") { // 只取已發布
+      
+      // 檢查狀態：支援 "published" 字串或 true (Checkbox)
+      const status = row[9];
+      if (status === "published" || status === true) {
         items.push({
           id: row[0],
           school: row[2],
@@ -438,6 +445,10 @@ function getRecentItems() {
 function getRecentWaitlist() {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_WAITLIST);
+    if (!sheet) {
+      return { status: "error", message: "Waitlist sheet not found" };
+    }
+
     const data = sheet.getDataRange().getValues();
     
     const requests = [];
@@ -445,7 +456,10 @@ function getRecentWaitlist() {
       if (requests.length >= 10) break;
       
       const row = data[i];
-      if (row[5] === "active") {
+
+      // 檢查狀態：支援 "active" 字串或 true (Checkbox)
+      const status = row[5];
+      if (status === "active" || status === true) {
         requests.push({
           id: row[0],
           school: row[2],
