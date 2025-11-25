@@ -16,16 +16,16 @@
 2. 在第一列輸入以下標題（A1 到 L1）：
 
 ```
-id | seller_id | school | type | gender | size | price | condition_score | defects | status | image_base64 | created_at
+id | seller_id | school | type | gender | size | conditions | condition_score | defects | status | image_base64 | created_at
 ```
 
 3. 填入 Mock Data（範例資料）：
 
 | A | B | C | D | E | F | G | H | I | J | K | L |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| item_001 | user_001 | 新北市板橋區海山國小 | sport_top | F | 140 | 150 | 4 | 無明顯瑕疵 | published | (skip) | 2025-10-01 |
-| item_002 | user_002 | 新北市板橋區光復國小 | uniform_bottom | M | M | 200 | 5 | 無 | published | (skip) | 2025-10-02 |
-| item_003 | user_001 | 台北市大安區建國國小 | dress | F | 130 | 180 | 3 | 裙擺有小污漬 | published | (skip) | 2025-10-03 |
+| item_001 | user_001 | 新北市板橋區海山國小 | sport_top | F | 140 | 150元 | 4 | 無明顯瑕疵 | published | (skip) | 2025-10-01 |
+| item_002 | user_002 | 新北市板橋區光復國小 | uniform_bottom | M | M | 200元 | 5 | 無 | published | (skip) | 2025-10-02 |
+| item_003 | user_001 | 台北市大安區建國國小 | dress | F | 130 | 180元 | 3 | 裙擺有小污漬 | published | (skip) | 2025-10-03 |
 
 ### 2.2 Waitlist 工作表（預約單）
 

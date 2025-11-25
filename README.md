@@ -16,7 +16,7 @@
 
 **Re:Uniform** 是一個專為台灣家長設計的二手制服交易平台，透過 AI 技術簡化上架和搜尋流程：
 
-- 📸 **AI 自動辨識**：拍照後自動填寫學校、尺寸、價格
+- 📸 **AI 自動辨識**：拍照後自動填寫學校、尺寸、交換條件
 - 💬 **白話文搜尋**：用自然語言搜尋，不用填複雜表單
 - 🔔 **缺貨預約**：沒貨時加入等候清單，有貨立即通知
 
@@ -28,7 +28,7 @@
 
 1. 點擊「📸 賣制服」按鈕
 2. 拍攝或上傳制服照片
-3. AI 自動分析並填寫資料（學校、款式、尺寸、新舊狀況、建議售價）
+3. AI 自動分析並填寫資料（學校、款式、尺寸、新舊狀況、建議交換條件）
 4. 檢視並調整資料
 5. 確認上架完成
 
@@ -125,7 +125,7 @@ git push -u origin main
 | type | 類型（sport_top/uniform_bottom 等） |
 | gender | 性別（M/F/U） |
 | size | 尺寸 |
-| price | 價格 |
+| conditions | 交換條件 |
 | condition_score | 新舊程度（1-5） |
 | defects | 瑕疵描述 |
 | status | 狀態（published/sold） |
@@ -173,7 +173,7 @@ git push -u origin main
     "type": "sport_top",
     "gender": "F",
     "size": "140",
-    "price": 150,
+    "conditions": "150元",
     "condition": 4,
     "defects": "無明顯瑕疵"
   }
@@ -300,7 +300,7 @@ git push -u origin main
 - [ ] 推播通知（缺貨預約通知）
 - [ ] 圖片上傳至 Cloud Storage
 - [ ] 地圖定位（面交地點）
-- [ ] 進階篩選（價格區間、新舊程度）
+- [ ] 進階篩選（交換條件、新舊程度）
 
 ## 授權
 

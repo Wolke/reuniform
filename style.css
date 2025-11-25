@@ -786,7 +786,7 @@ body {
     color: var(--primary-light);
 }
 
-.result-price {
+.result-conditions {
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--accent);

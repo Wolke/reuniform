@@ -70,7 +70,7 @@ Data Flow:
 
 ### **Tab 1: Items (商品表 \- 支援 Story A)**
 
-| id | seller\_id | school | type | gender | size | price | condition\_score | defects | status | image\_base64 (prefix) | created\_at |
+| id | seller\_id | school | type | gender | size | conditions | condition\_score | defects | status | image\_base64 (prefix) | created\_at |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
 | *Mock Data* | *user\_001* | *新北市板橋區海山國小* | *sport\_top* | *F* | *140* | *150* | *4* | *無明顯瑕疵* | *published* | *(skip)* | *2025-10-01* |
 | *Mock Data* | *user\_002* | *新北市板橋區光復國小* | *uniform\_bottom* | *M* | *M* | *200* | *5* | *無* | *published* | *(skip)* | *2025-10-02* |
@@ -102,7 +102,7 @@ const GEMINI\_API\_KEY \= "YOUR\_API\_KEY\_HERE"; // Replace with actual key
 * **Input**: { "action": "uploadItem", "imageBase64": "..." }  
 * **Logic**:  
   1. 呼叫 **Gemini 2.5 Flash (Vision)** 分析圖片。  
-  2. Prompt: "Analyze this school uniform. Return JSON with fields: school (Taiwanese school name), type (e.g. sport\_top), gender, size, condition (1-5), defects, suggested\_price."  
+  2. Prompt: "Analyze this school uniform. Return JSON with fields: school (Taiwanese school name), type (e.g. sport\_top), gender, size, condition (1-5), defects, suggested\_conditions."  
   3. 將 Gemini 回傳的 JSON 資料寫入 Items Sheet。  
 * **Output**: { "status": "success", "data": { ...item\_details } }
 
@@ -137,7 +137,7 @@ const GEMINI\_API\_KEY \= "YOUR\_API\_KEY\_HERE"; // Replace with actual key
    * \<input type="file" capture="environment"\> 啟動相機。  
    * Preview Image (\<img\>).  
    * Loading Spinner ("AI 正在分析您的制服...").  
-   * Form: 顯示 AI 填好的結果 (School, Size, Price)，允許手動修改。  
+   * Form: 顯示 AI 填好的結果 (School, Size, Conditions)，允許手動修改。  
    * \[確認上架\] 按鈕。  
 3. **Result View**:  
    * 列出符合的 Mock Data 或搜尋結果。  

@@ -1,5 +1,5 @@
 // ==================== Configuration ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbzdP5Gn3QZZ3DBHZnCrzVnkw8UuGwN0FwH5zlZP8bQ3iFvehCKQH_MQNdyoaVl_ttMJ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwRjKXzkd7dNd8dkyKeobfE8DacmHp20z-Ubh14qUcliVmbNNhXW_Egh6IxwNlEUaq40Q/exec";
 const MOCK_USER_ID = "user_001"; // Mock User for testing
 
 // ==================== State Management ====================
@@ -280,7 +280,7 @@ function displaySearchResults(results, suggestWaitlist) {
                 <span class="meta-tag">狀況: ${item.condition_score}/5</span>
             </div>
             <p class="text-sm text-gray-400">瑕疵：${escapeHtml(item.defects)}</p>
-            <p class="result-price text-primary font-bold">${escapeHtml(item.conditions || '可議')}</p>
+            <p class="result-conditions text-primary font-bold">${escapeHtml(item.conditions || '可議')}</p>
         </div>
     `).join('');
 

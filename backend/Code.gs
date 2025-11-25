@@ -112,7 +112,7 @@ function uploadItem(params) {
       aiResult.gender || "U",
       aiResult.size || "M",
       aiResult.size || "M",
-      aiResult.suggested_conditions || "可議", // 原本是 price
+      aiResult.suggested_conditions || "可議", 
       aiResult.condition || 3,
       aiResult.defects || "無",
       "published",
