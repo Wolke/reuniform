@@ -50,7 +50,9 @@ function initializeEventListeners() {
     // Example tags
     document.querySelectorAll('.example-tag').forEach(tag => {
         tag.addEventListener('click', (e) => {
+            e.preventDefault();
             const query = e.target.dataset.query;
+            console.log('Example tag clicked:', query);
             document.getElementById('searchInput').value = query;
             handleSearch();
         });
