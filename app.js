@@ -1,420 +1,346 @@
+/**
+ * Re:Uniform Frontend Logic
+ * Premium Mobile-First Version
+ */
+
 // ==================== Configuration ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbwRjKXzkd7dNd8dkyKeobfE8DacmHp20z-Ubh14qUcliVmbNNhXW_Egh6IxwNlEUaq40Q/exec";
-const MOCK_USER_ID = "user_001"; // Mock User for testing
+const CONFIG = {
+    API_URL: "https://script.google.com/macros/s/AKfycbwRjKXzkd7dNd8dkyKeobfE8DacmHp20z-Ubh14qUcliVmbNNhXW_Egh6IxwNlEUaq40Q/exec",
+    MOCK_USER_ID: "user_001"
+};
 
-// ==================== State Management ====================
-let currentImageBase64 = null;
-let currentSearchIntent = null;
+// ==================== State ====================
+const state = {
+    currentView: 'home',
+    searchQuery: '',
+    uploadImage: null,
+    uploadData: {}
+};
 
-// ==================== View Management ====================
-function showView(viewId) {
-    document.querySelectorAll('.view').forEach(view => {
-        view.classList.remove('active');
-    });
-    document.getElementById(viewId).classList.add('active');
-}
+// ==================== DOM Elements ====================
+const dom = {
+    views: document.querySelectorAll('.view'),
+    navItems: document.querySelectorAll('.nav-item'),
+    uploadModal: document.getElementById('uploadModal'),
+    toast: document.getElementById('toast'),
 
-function showStep(stepId) {
-    document.querySelectorAll('.step').forEach(step => {
-        step.classList.remove('active');
-    });
-    document.getElementById(stepId).classList.add('active');
-}
+    // Home
+    searchInput: document.getElementById('searchInput'),
+    searchBtn: document.getElementById('searchBtn'),
+    recentItemsList: document.getElementById('recentItemsList'),
+    recentWaitlistList: document.getElementById('recentWaitlistList'),
 
-// ==================== Toast Notifications ====================
-function showToast(message, type = 'success') {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
-    toast.className = `toast ${type} show`;
+    // Upload
+    uploadBtn: document.getElementById('uploadBtn'),
+    closeUploadBtn: document.getElementById('closeUploadBtn'),
+    imageInput: document.getElementById('imageInput'),
+    uploadTrigger: document.getElementById('uploadTrigger'),
+    previewContainer: document.getElementById('previewContainer'),
+    imagePreview: document.getElementById('imagePreview'),
+    analyzeBtn: document.getElementById('analyzeBtn'),
+    retakeBtn: document.getElementById('retakeBtn'),
+    itemForm: document.getElementById('itemForm'),
 
-    setTimeout(() => {
-        toast.classList.remove('show');
-    }, 3000);
-}
+    // Result
+    queryDisplay: document.getElementById('queryDisplay'),
+    resultsContainer: document.getElementById('resultsContainer'),
+    emptyState: document.getElementById('emptyState'),
+    addWaitlistBtn: document.getElementById('addWaitlistBtn')
+};
 
-// ==================== Home View - Event Listeners ====================
+// ==================== Initialization ====================
 document.addEventListener('DOMContentLoaded', () => {
-    initializeEventListeners();
+    initRouter();
+    initEventListeners();
+    loadDashboardData();
 });
 
-function initializeEventListeners() {
-    // Load dashboard data
-    fetchRecentData();
+function initEventListeners() {
+    // Navigation
+    dom.navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const view = e.target.dataset.view;
+            if (view) navigateTo(view);
+        });
+    });
 
-    // Search functionality
-    document.getElementById('searchBtn').addEventListener('click', handleSearch);
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    // Search
+    dom.searchBtn.addEventListener('click', handleSearch);
+    dom.searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') handleSearch();
     });
 
-    // Example tags
-    document.querySelectorAll('.example-tag').forEach(tag => {
-        tag.addEventListener('click', (e) => {
-            e.preventDefault();
-            const query = e.target.dataset.query;
-            console.log('Example tag clicked:', query);
-            document.getElementById('searchInput').value = query;
+    // Search Tags
+    document.querySelectorAll('.tag').forEach(tag => {
+        tag.addEventListener('click', () => {
+            dom.searchInput.value = tag.dataset.query;
             handleSearch();
         });
     });
 
-    // Upload flow
-    document.getElementById('uploadBtn').addEventListener('click', () => {
-        showView('uploadView');
-        resetUploadFlow();
-    });
+    // Upload Flow
+    dom.uploadBtn.addEventListener('click', openUploadModal);
+    dom.closeUploadBtn.addEventListener('click', closeUploadModal);
 
-    document.getElementById('closeUploadBtn').addEventListener('click', () => {
-        showView('homeView');
-    });
+    dom.uploadTrigger.addEventListener('click', () => dom.imageInput.click());
+    dom.imageInput.addEventListener('change', handleImageSelect);
 
-    document.getElementById('imageInput').addEventListener('change', handleImageSelect);
-    document.getElementById('retakeBtn').addEventListener('click', () => {
-        document.getElementById('imagePreview').classList.add('hidden');
-        document.getElementById('uploadArea').style.display = 'block';
-        currentImageBase64 = null;
-    });
+    dom.retakeBtn.addEventListener('click', resetUploadStep);
+    dom.analyzeBtn.addEventListener('click', handleAnalyze);
 
-    document.getElementById('analyzeBtn').addEventListener('click', handleAnalyze);
+    dom.itemForm.addEventListener('submit', handleSubmitItem);
 
-    // Form
-    document.getElementById('itemForm').addEventListener('submit', handleSubmitItem);
-    document.getElementById('conditionInput').addEventListener('input', (e) => {
+    // Range Slider UI
+    document.getElementById('conditionRange').addEventListener('input', (e) => {
         document.getElementById('conditionValue').textContent = e.target.value;
     });
 
-    // Success flow
-    document.getElementById('uploadAnotherBtn').addEventListener('click', () => {
-        resetUploadFlow();
-        showStep('uploadStep');
-    });
+    // Result View
+    document.querySelector('.btn-back').addEventListener('click', () => navigateTo('home'));
+    dom.addWaitlistBtn.addEventListener('click', handleAddToWaitlist);
 
-    document.getElementById('backHomeBtn').addEventListener('click', () => {
-        showView('homeView');
+    // Reset Flow
+    document.getElementById('resetUploadBtn').addEventListener('click', () => {
+        resetUploadStep();
+        showStep('step-camera');
     });
-
-    // Result view
-    document.getElementById('backToHomeBtn').addEventListener('click', () => {
-        showView('homeView');
-    });
-
-    document.getElementById('addWaitlistBtn').addEventListener('click', handleAddToWaitlist);
 }
 
-function resetUploadFlow() {
-    showStep('uploadStep');
-    document.getElementById('uploadArea').style.display = 'block';
-    document.getElementById('imagePreview').classList.add('hidden');
-    document.getElementById('itemForm').reset();
-    document.getElementById('conditionValue').textContent = '3';
-    currentImageBase64 = null;
+// ==================== Router ====================
+function navigateTo(viewId) {
+    state.currentView = viewId;
+
+    // Update UI
+    dom.views.forEach(view => {
+        if (view.id === `${viewId}-view`) {
+            view.classList.add('active');
+        } else {
+            view.classList.remove('active');
+        }
+    });
+
+    // Update Nav
+    dom.navItems.forEach(item => {
+        if (item.dataset.view === viewId) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+
+    window.scrollTo(0, 0);
 }
 
-// ==================== Story A: Upload Item (Seller Flow) ====================
+// ==================== API Service ====================
+const api = {
+    async post(action, data = {}) {
+        try {
+            const response = await fetch(CONFIG.API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action, ...data })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            showToast('網路連線錯誤', 'error');
+            throw error;
+        }
+    }
+};
+
+// ==================== Feature: Dashboard ====================
+async function loadDashboardData() {
+    try {
+        // Parallel fetch
+        const [itemsRes, waitlistRes] = await Promise.all([
+            api.post('getRecentItems'),
+            api.post('getRecentWaitlist')
+        ]);
+
+        if (itemsRes.status === 'success') {
+            renderItems(itemsRes.data, dom.recentItemsList);
+        }
+
+        if (waitlistRes.status === 'success') {
+            renderWaitlist(waitlistRes.data, dom.recentWaitlistList);
+        }
+    } catch (e) {
+        console.error('Dashboard load failed', e);
+    }
+}
+
+function renderItems(items, container) {
+    if (!items || items.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">目前沒有商品</p>';
+        return;
+    }
+
+    container.innerHTML = items.map(item => `
+        <div class="item-card">
+            <div class="item-thumb" style="background-color: ${stringToColor(item.school)}"></div>
+            <div class="item-info">
+                <div class="item-school">${escapeHtml(item.school)}</div>
+                <div class="item-meta">
+                    <span>${getTypeName(item.type)}</span>
+                    <span>•</span>
+                    <span>${escapeHtml(item.size)}</span>
+                    <span>•</span>
+                    <span>${item.condition_score}/5</span>
+                </div>
+                <div class="item-conditions">${escapeHtml(item.conditions || '可議')}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderWaitlist(list, container) {
+    if (!list || list.length === 0) {
+        container.innerHTML = '<p class="text-center text-muted">目前沒有需求</p>';
+        return;
+    }
+
+    container.innerHTML = list.map(req => `
+        <div class="waitlist-row">
+            <div class="waitlist-school">${escapeHtml(req.school)}</div>
+            <div class="waitlist-req">徵求：${getTypeName(req.type)} / ${escapeHtml(req.size)}</div>
+        </div>
+    `).join('');
+}
+
+// ==================== Feature: Search ====================
+async function handleSearch() {
+    const query = dom.searchInput.value.trim();
+    if (!query) return showToast('請輸入搜尋內容', 'error');
+
+    navigateTo('result');
+    dom.queryDisplay.innerHTML = `<span class="text-muted">搜尋：</span> <strong>${escapeHtml(query)}</strong>`;
+    dom.resultsContainer.innerHTML = '<div class="skeleton-card"></div><div class="skeleton-card"></div>';
+    dom.emptyState.classList.add('hidden');
+
+    const res = await api.post('searchItems', { query });
+
+    if (res.status === 'success') {
+        state.lastSearchIntent = res.intent;
+        if (res.results.length > 0) {
+            renderItems(res.results, dom.resultsContainer);
+        } else {
+            dom.resultsContainer.innerHTML = '';
+            dom.emptyState.classList.remove('hidden');
+        }
+    } else {
+        showToast(res.message || '搜尋失敗', 'error');
+        dom.resultsContainer.innerHTML = '';
+    }
+}
+
+async function handleAddToWaitlist() {
+    if (!state.lastSearchIntent) return;
+
+    const { school, type, size_approx } = state.lastSearchIntent;
+    const res = await api.post('addToWaitlist', {
+        school, type, size: size_approx, requesterId: CONFIG.MOCK_USER_ID
+    });
+
+    if (res.status === 'success') {
+        showToast('已加入預約清單！', 'success');
+        setTimeout(() => navigateTo('home'), 2000);
+    }
+}
+
+// ==================== Feature: Upload ====================
+function openUploadModal() {
+    dom.uploadModal.classList.add('active');
+    resetUploadStep();
+}
+
+function closeUploadModal() {
+    dom.uploadModal.classList.remove('active');
+}
+
+function showStep(stepId) {
+    document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+    document.getElementById(stepId).classList.add('active');
+}
 
 function handleImageSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showToast('請選擇圖片檔案', 'error');
-        return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-        showToast('圖片檔案過大，請選擇小於 5MB 的圖片', 'error');
-        return;
-    }
-
-    // Convert to base64
     const reader = new FileReader();
     reader.onload = (event) => {
-        currentImageBase64 = event.target.result;
-
-        // Show preview
-        document.getElementById('previewImage').src = currentImageBase64;
-        document.getElementById('uploadArea').style.display = 'none';
-        document.getElementById('imagePreview').classList.remove('hidden');
+        state.uploadImage = event.target.result;
+        dom.imagePreview.src = state.uploadImage;
+        dom.uploadTrigger.classList.add('hidden');
+        dom.previewContainer.classList.remove('hidden');
     };
     reader.readAsDataURL(file);
 }
 
+function resetUploadStep() {
+    state.uploadImage = null;
+    dom.imageInput.value = '';
+    dom.uploadTrigger.classList.remove('hidden');
+    dom.previewContainer.classList.add('hidden');
+    showStep('step-camera');
+}
+
 async function handleAnalyze() {
-    if (!currentImageBase64) {
-        showToast('請先選擇圖片', 'error');
-        return;
-    }
+    if (!state.uploadImage) return showToast('請先選擇照片', 'error');
 
-    showStep('loadingStep');
+    showStep('step-loading');
 
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: JSON.stringify({
-                action: 'uploadItem',
-                imageBase64: currentImageBase64,
-                sellerId: MOCK_USER_ID
-            })
-        });
+    const res = await api.post('uploadItem', {
+        imageBase64: state.uploadImage,
+        sellerId: CONFIG.MOCK_USER_ID
+    });
 
-        const result = await response.json();
+    if (res.status === 'success') {
+        const data = res.data;
+        // Fill Form
+        document.getElementById('schoolInput').value = data.school || '';
+        document.getElementById('typeInput').value = data.type || 'sport_top';
+        document.getElementById('sizeInput').value = data.size || '';
+        document.getElementById('conditionsInput').value = data.conditions || '';
+        document.getElementById('conditionRange').value = data.condition || 3;
+        document.getElementById('conditionValue').textContent = data.condition || 3;
 
-        if (result.status === 'success') {
-            // Populate form with AI results
-            document.getElementById('schoolInput').value = result.data.school || '';
-            document.getElementById('typeInput').value = result.data.type || 'sport_top';
-            document.getElementById('genderInput').value = result.data.gender || 'U';
-            document.getElementById('itemSize').value = result.data.size || '';
-            document.getElementById('itemConditions').value = result.data.conditions || '';
-            document.getElementById('itemCondition').value = result.data.condition || 3;
-            document.getElementById('conditionValue').textContent = result.data.condition || 3;
-            document.getElementById('itemDefects').value = result.data.defects || '無';
-
-            showStep('reviewStep');
-            showToast('AI 分析完成！請檢查資料', 'success');
-        } else {
-            showToast(result.message || 'AI 分析失敗，請重試', 'error');
-            showStep('uploadStep');
-        }
-    } catch (error) {
-        console.error('Error analyzing image:', error);
-        showToast('網路錯誤，請確認已設定 API URL', 'error');
-        showStep('uploadStep');
+        showStep('step-form');
+    } else {
+        showToast('AI 分析失敗，請重試', 'error');
+        showStep('step-camera');
     }
 }
 
 async function handleSubmitItem(e) {
     e.preventDefault();
-
-    showStep('loadingStep');
-
-    // Simulate a brief delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    showStep('successStep');
+    // In a real app, we would send the edited data back to update the item
+    // For this demo, we assume the initial upload created the item and we are just confirming
+    showStep('step-success');
 }
 
-// ==================== Story B: Search Items (Buyer Flow) ====================
-
-async function handleSearch() {
-    console.log('handleSearch called');
-    const query = document.getElementById('searchInput').value.trim();
-    console.log('Search query:', query);
-
-    if (!query) {
-        showToast('請輸入搜尋內容', 'warning');
-        return;
-    }
-
-    showView('resultView');
-    document.getElementById('queryDisplay').innerHTML = `
-        <p class="text-sm text-gray-400">搜尋：</p>
-        <p class="text-lg font-semibold">${escapeHtml(query)}</p>
-    `;
-
-    // Show loading state
-    document.getElementById('resultsContainer').innerHTML = `
-        <div class="loading-animation">
-            <div class="spinner"></div>
-            <p class="loading-text">正在搜尋...</p>
-        </div>
-    `;
-    document.getElementById('emptyState').classList.add('hidden');
-
-    try {
-        console.log('Sending fetch request to:', API_URL);
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: JSON.stringify({
-                action: 'searchItems',
-                query: query
-            })
-        });
-        console.log('Fetch response status:', response.status);
-
-        const result = await response.json();
-        console.log('Search result:', result);
-
-        if (result.status === 'success') {
-            currentSearchIntent = result.intent;
-            displaySearchResults(result.results, result.suggestWaitlist);
-        } else {
-            console.error('Search failed with status:', result.status, result.message);
-            showToast(result.message || '搜尋失敗', 'error');
-            document.getElementById('resultsContainer').innerHTML = '';
-        }
-    } catch (error) {
-        console.error('Error searching:', error);
-        showToast('網路錯誤，請確認已設定 API URL', 'error');
-        document.getElementById('resultsContainer').innerHTML = '';
-    }
+// ==================== Helpers ====================
+function showToast(msg, type = 'success') {
+    dom.toast.textContent = msg;
+    dom.toast.className = `toast-notification show ${type}`;
+    setTimeout(() => {
+        dom.toast.classList.remove('show');
+    }, 3000);
 }
-
-function displaySearchResults(results, suggestWaitlist) {
-    const container = document.getElementById('resultsContainer');
-    const emptyState = document.getElementById('emptyState');
-
-    if (results.length === 0) {
-        container.innerHTML = '';
-        emptyState.classList.remove('hidden');
-        return;
-    }
-
-    emptyState.classList.add('hidden');
-
-    const html = results.map(item => `
-        <div class="result-card">
-            <h3>${escapeHtml(item.school)}</h3>
-            <div class="result-meta">
-                <span class="meta-tag">${getTypeName(item.type)}</span>
-                <span class="meta-tag">${getGenderName(item.gender)}</span>
-                <span class="meta-tag">尺寸: ${escapeHtml(item.size)}</span>
-                <span class="meta-tag">狀況: ${item.condition_score}/5</span>
-            </div>
-            <p class="text-sm text-gray-400">瑕疵：${escapeHtml(item.defects)}</p>
-            <p class="result-conditions text-primary font-bold">${escapeHtml(item.conditions || '可議')}</p>
-        </div>
-    `).join('');
-
-    container.innerHTML = html;
-}
-
-async function handleAddToWaitlist() {
-    if (!currentSearchIntent) {
-        showToast('無法加入預約清單', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain',
-            },
-            body: JSON.stringify({
-                action: 'addToWaitlist',
-                school: currentSearchIntent.school,
-                type: currentSearchIntent.type,
-                size: currentSearchIntent.size_approx,
-                requesterId: MOCK_USER_ID
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.status === 'success') {
-            showToast('已加入預約清單！有貨時會通知您', 'success');
-            setTimeout(() => {
-                showView('homeView');
-            }, 2000);
-        } else {
-            showToast(result.message || '加入預約失敗', 'error');
-        }
-    } catch (error) {
-        console.error('Error adding to waitlist:', error);
-        showToast('網路錯誤', 'error');
-    }
-}
-
-// ==================== Dashboard Logic ====================
-
-async function fetchRecentData() {
-    try {
-        // Fetch Recent Items
-        const itemsResponse = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'getRecentItems' })
-        });
-        const itemsResult = await itemsResponse.json();
-        if (itemsResult.status === 'success') {
-            renderRecentItems(itemsResult.data);
-        }
-
-        // Fetch Waitlist
-        const waitlistResponse = await fetch(API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'getRecentWaitlist' })
-        });
-        const waitlistResult = await waitlistResponse.json();
-        if (waitlistResult.status === 'success') {
-            renderWaitlist(waitlistResult.data);
-        }
-    } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-    }
-}
-
-function renderRecentItems(items) {
-    const container = document.getElementById('recentItemsList');
-    if (!items || items.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center">目前沒有上架商品</p>';
-        return;
-    }
-
-    container.innerHTML = items.map(item => `
-        <div class="result-card">
-            <div class="flex justify-between items-start">
-                <h3 class="text-lg font-bold text-white mb-1">${escapeHtml(item.school)}</h3>
-                <span class="text-accent font-bold">${escapeHtml(item.conditions || '可議')}</span>
-            </div>
-            <div class="result-meta mb-2">
-                <span class="meta-tag">${getTypeName(item.type)}</span>
-                <span class="meta-tag">${getGenderName(item.gender)}</span>
-                <span class="meta-tag">${escapeHtml(item.size)}</span>
-            </div>
-            <div class="flex justify-between items-center text-sm text-gray-400">
-                <span>狀況: ${item.condition_score}/5</span>
-                <span>${new Date(item.created_at).toLocaleDateString()}</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-function renderWaitlist(requests) {
-    const container = document.getElementById('recentWaitlistList');
-    if (!requests || requests.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center">目前沒有徵求需求</p>';
-        return;
-    }
-
-    container.innerHTML = requests.map(req => `
-        <div class="result-card border-l-4 border-secondary">
-            <h3 class="text-lg font-bold text-white mb-1">${escapeHtml(req.school)}</h3>
-            <div class="result-meta mb-2">
-                <span class="meta-tag">${getTypeName(req.type)}</span>
-                <span class="meta-tag">需求尺寸: ${escapeHtml(req.size)}</span>
-            </div>
-            <div class="flex justify-between items-center mt-3">
-                <span class="text-primary font-bold">${escapeHtml(req.conditions || '可議')}</span>
-                <button class="text-sm text-gray-500 hover:text-primary">查看詳情</button>
-            </div>
-            <div class="text-sm text-gray-400 text-right">
-                <span>${new Date(req.created_at).toLocaleDateString()}</span>
-            </div>
-        </div>
-    `).join('');
-}
-
-// ==================== Helper Functions ====================
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+    if (!text) return '';
+    return text.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 function getTypeName(type) {
-    const typeNames = {
+    const map = {
         'sport_top': '運動服上衣',
         'sport_bottom': '運動褲',
         'uniform_top': '制服上衣',
@@ -422,20 +348,15 @@ function getTypeName(type) {
         'dress': '洋裝',
         'jacket': '外套'
     };
-    return typeNames[type] || type;
+    return map[type] || type;
 }
 
-function getGenderName(gender) {
-    const genderNames = {
-        'M': '男生',
-        'F': '女生',
-        'U': '不限'
-    };
-    return genderNames[gender] || gender;
-}
-
-// ==================== Service Worker Registration (Optional) ====================
-if ('serviceWorker' in navigator) {
-    // Uncomment to enable PWA features
-    // navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed'));
+function stringToColor(str) {
+    // Generate a consistent pastel color from string
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = hash % 360;
+    return `hsl(${h}, 70%, 80%)`;
 }
