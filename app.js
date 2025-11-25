@@ -202,7 +202,9 @@ async function handleSubmitItem(e) {
 // ==================== Story B: Search Items (Buyer Flow) ====================
 
 async function handleSearch() {
+    console.log('handleSearch called');
     const query = document.getElementById('searchInput').value.trim();
+    console.log('Search query:', query);
 
     if (!query) {
         showToast('請輸入搜尋內容', 'warning');
@@ -225,6 +227,7 @@ async function handleSearch() {
     document.getElementById('emptyState').classList.add('hidden');
 
     try {
+        console.log('Sending fetch request to:', API_URL);
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
@@ -235,13 +238,16 @@ async function handleSearch() {
                 query: query
             })
         });
+        console.log('Fetch response status:', response.status);
 
         const result = await response.json();
+        console.log('Search result:', result);
 
         if (result.status === 'success') {
             currentSearchIntent = result.intent;
             displaySearchResults(result.results, result.suggestWaitlist);
         } else {
+            console.error('Search failed with status:', result.status, result.message);
             showToast(result.message || '搜尋失敗', 'error');
             document.getElementById('resultsContainer').innerHTML = '';
         }
