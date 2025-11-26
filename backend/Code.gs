@@ -78,7 +78,7 @@ function doGet(e) {
 // ==================== Story A: 上架制服 (AI 視覺辨識) ====================
 
 /**
- * uploadItem - 使用 AI 分析制服圖片並上架
+ * uploadItem - 使用 AI 分析制服圖片並上傳到 Google Drive
  * @param {Object} params - { imageBase64: string, sellerId?: string }
  */
 function uploadItem(params) {
@@ -93,15 +93,26 @@ function uploadItem(params) {
     // 移除 data:image/xxx;base64, 前綴（如果有的話）
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     
-    // 呼叫 OpenAI Vision API 分析圖片
+    // 生成商品 ID
+    const itemId = "item_" + new Date().getTime();
+    
+    // 1. 上傳圖片到 Google Drive（在 AI 分析之前，這樣即使 AI 失敗圖片也已保存）
+    let imageUrl;
+    try {
+      imageUrl = uploadImageToDrive(base64Data, itemId);
+    } catch(driveError) {
+      Logger.log("Drive upload error: " + driveError.toString());
+      return { status: "error", message: "圖片上傳失敗: " + driveError.toString() };
+    }
+    
+    // 2. 呼叫 OpenAI Vision API 分析圖片
     const aiResult = analyzeUniformImage(base64Data);
     
     if (!aiResult) {
       return { status: "error", message: "AI 分析失敗，請重試" };
     }
     
-    // 寫入 Items Sheet
-    const itemId = "item_" + new Date().getTime();
+    // 3. 寫入 Items Sheet（儲存 Google Drive URL 而非 base64）
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
     
     const newRow = [
@@ -111,12 +122,11 @@ function uploadItem(params) {
       aiResult.type || "unknown",
       aiResult.gender || "U",
       aiResult.size || "M",
-
       aiResult.suggested_conditions || "可議", 
       aiResult.condition || 3,
       aiResult.defects || "無",
       "published",
-      "data:image/jpeg;base64," + base64Data.substring(0, 100) + "...", // 儲存部分 base64 作為示意
+      imageUrl, // 儲存 Google Drive URL
       new Date().toLocaleDateString('zh-TW')
     ];
     
@@ -133,7 +143,8 @@ function uploadItem(params) {
         size: aiResult.size,
         conditions: aiResult.suggested_conditions,
         condition: aiResult.condition,
-        defects: aiResult.defects
+        defects: aiResult.defects,
+        image_url: imageUrl
       }
     };
     
@@ -440,6 +451,7 @@ function getRecentItems() {
           conditions: row[6], // 原本是 price
           condition_score: row[7],
           defects: row[8],
+          image_url: row[10], // Google Drive URL
           created_at: row[11]
         });
       }

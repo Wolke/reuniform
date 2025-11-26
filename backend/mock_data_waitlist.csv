@@ -1,0 +1,5 @@
+id,requester_id,target_school,target_type,target_size,status,created_at
+WAIT001,user_003,海山國小,dress,130,active,2025-10-05
+WAIT002,user_004,光復國小,sport_top_short,140,active,2025-10-06
+WAIT003,user_005,幸安國小,uniform_skirt,150,active,2025-10-07
+WAIT004,user_006,中和國小,jacket,160,active,2025-10-08

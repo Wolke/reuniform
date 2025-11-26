@@ -1,0 +1,7 @@
+id,seller_id,school,type,gender,size,conditions,condition_score,defects,status,image_url,created_at
+ITEM001,user_001,新北市板橋區海山國小,sport_top_short,F,140,150元,4,無明顯瑕疵,published,https://via.placeholder.com/400x600/4A90E2/FFFFFF?text=%E6%B5%B7%E5%B1%B1%E5%9C%8B%E5%B0%8F%E9%81%8B%E5%8B%95%E6%9C%8D,2025-10-01
+ITEM002,user_002,新北市板橋區光復國小,uniform_bottom_long,M,M,200元,5,無,published,https://via.placeholder.com/400x600/50C878/FFFFFF?text=%E5%85%89%E5%BE%A9%E5%9C%8B%E5%B0%8F%E5%88%B6%E6%9C%8D%E8%A4%B2,2025-10-02
+ITEM003,user_003,台北市中正區國語實驗小學,dress,F,130,180元,3,袖口有小汙漬,published,https://via.placeholder.com/400x600/E89ABE/FFFFFF?text=%E5%9C%8B%E8%AA%9E%E5%AF%A6%E5%B0%8F%E6%B4%8B%E8%A3%9D,2025-10-03
+ITEM004,user_001,新北市板橋區海山國小,sport_bottom_short,M,150,免費,5,無,published,https://via.placeholder.com/400x600/FF6B6B/FFFFFF?text=%E9%81%8B%E5%8B%95%E7%9F%AD%E8%A4%B2,2025-10-04
+ITEM005,user_004,台北市大安區幸安國小,uniform_top_short,F,140,100元,4,領口略有磨損,published,https://via.placeholder.com/400x600/4ECDC4/FFFFFF?text=%E5%B9%B8%E5%AE%89%E5%9C%8B%E5%B0%8F%E5%88%B6%E6%9C%8D,2025-10-05
+ITEM006,user_002,新北市中和區中和國小,jacket,M,160,250元,4,拉鍊正常,published,https://via.placeholder.com/400x600/95E1D3/FFFFFF?text=%E4%B8%AD%E5%92%8C%E5%9C%8B%E5%B0%8F%E5%A4%96%E5%A5%97,2025-10-06

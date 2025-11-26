@@ -39,9 +39,12 @@
 
 ### **Frontend (Hosting: GitHub Pages)**
 
-* **Language**: Pure HTML5, CSS3, Vanilla JavaScript (ES6+).  
-* **Styling**: Tailwind CSS (透過 CDN 引入，方便快速切版).  
-* **Hosting**: GitHub Pages (Static site hosting).
+* **Framework**: React 19 with Vite build tool.  
+* **Language**: JavaScript (ES6+) with JSX.  
+* **Styling**: Tailwind CSS (integrated via npm).  
+* **Routing**: React Router DOM for SPA navigation.  
+* **Hosting**: GitHub Pages (deployed via `gh-pages` package to `gh-pages` branch).
+* **Deployment**: `npm run deploy` (自動 build 並部署到 GitHub Pages).
 
 ### **Backend (Google Apps Script)**
 
@@ -52,17 +55,22 @@
 
 ### **AI Models**
 
-* **Vision**: gemini-2.5-flash (用於 Story A: 辨識制服圖片).  
-* **NLP**: gemini-2.5-flash (用於 Story B: 解析搜尋語意).
+* **Vision**: OpenAI gpt-4o (用於 Story A: 辨識制服圖片).  
+* **NLP**: OpenAI gpt-4o-mini (用於 Story B: 解析搜尋語意).
+* **API Key Storage**: Script Properties (在 GAS 中設定 `OPENAI_API_KEY`).
 
 ## **4\. 系統架構 (Architecture)**
 
 Data Flow:  
-\[Client (GitHub Pages)\] \--(fetch POST)--\> \[GAS Web App URL\] \--(UrlFetchApp)--\> \[Gemini API\] & \[Google Sheets\]
+\[React App (GitHub Pages)\] \--(fetch POST)--\> \[GAS Web App URL\]  
+  └─> \[OpenAI API\] (圖片辨識 & NLP)  
+  └─> \[Google Drive\] (圖片儲存)  
+  └─> \[Google Sheets\] (資料庫)
 
-1. **前端**：負責 UI 呈現、拍照 (Input file capture)、將圖片轉為 Base64 字串傳送給後端。  
-2. **後端 (GAS)**：接收前端 JSON 請求，根據 action 參數分流處理。  
-3. **資料庫 (Sheets)**：每個 Tab 代表一個資料表。
+1. **前端 (React)**：負責 UI 呈現、拍照、將圖片轉為 Base64 傳送給後端。使用 React Router 進行頁面路由。  
+2. **後端 (GAS)**：接收前端 JSON 請求，根據 action 分流處理。圖片上傳至 Google Drive 並取得公開 URL，再呼叫 OpenAI API 進行分析。  
+3. **圖片儲存 (Drive)**：使用 Google Drive API，每張圖片儲存為獨立檔案並設定公開分享，返回 URL 存入 Sheets。  
+4. **資料庫 (Sheets)**：每個 Tab 代表一個資料表，儲存商品資訊（含 Google Drive 圖片 URL）。
 
 ## **5\. 資料庫設計 (Google Sheets Structure)**
 
@@ -70,16 +78,20 @@ Data Flow:
 
 ### **Tab 1: Items (商品表 \- 支援 Story A)**
 
-| id | seller\_id | school | type | gender | size | conditions | condition\_score | defects | status | image\_base64 (prefix) | created\_at |
+| id | seller\_id | school | type | gender | size | conditions | condition\_score | defects | status | image\_url | created\_at |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| *Mock Data* | *user\_001* | *新北市板橋區海山國小* | *sport\_top* | *F* | *140* | *150* | *4* | *無明顯瑕疵* | *published* | *(skip)* | *2025-10-01* |
-| *Mock Data* | *user\_002* | *新北市板橋區光復國小* | *uniform\_bottom* | *M* | *M* | *200* | *5* | *無* | *published* | *(skip)* | *2025-10-02* |
+| *ITEM001* | *user\_001* | *新北市板橋區海山國小* | *sport\_top* | *F* | *140* | *150元* | *4* | *無明顯瑕疵* | *published* | *https://drive.google.com/...* | *2025-10-01* |
+| *ITEM002* | *user\_002* | *新北市板橋區光復國小* | *uniform\_bottom* | *M* | *M* | *200元* | *5* | *無* | *published* | *https://drive.google.com/...* | *2025-10-02* |
+
+**Mock Data CSV**: 請直接複製 `backend/mock_data_items.csv` 內容貼入 Google Sheets。
 
 ### **Tab 2: Waitlist (預約單 \- 支援 Story B)**
 
 | id | requester\_id | target\_school | target\_type | target\_size | status | created\_at |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| *Mock Data* | *user\_003* | *海山國小* | *dress* | *130* | *active* | *2025-10-05* |
+| *WAIT001* | *user\_003* | *海山國小* | *dress* | *130* | *active* | *2025-10-05* |
+
+**Mock Data CSV**: 請直接複製 `backend/mock_data_waitlist.csv` 內容貼入 Google Sheets。
 
 ### **Tab 3: Users (使用者 \- 簡易版)**
 
@@ -87,13 +99,19 @@ Data Flow:
 | :---- | :---- | :---- |
 | *user\_001* | *林爸爸* | *Line: lin\_papa* |
 
+**Mock Data CSV**: 請直接複製 `backend/mock_data_users.csv` 內容貼入 Google Sheets。
+
 ## **6\. 後端 API 設計 (Google Apps Script)**
 
-請撰寫 Code.gs，實作 doPost(e) 函式來處理請求。API 統一回傳 JSON 格式。
+請參考 `backend/Code.gs` 和 `backend/DriveHelper.gs` 的完整實作。
 
-**Gemini API Key 設定**：
+**API Key 設定（Script Properties）**：
 
-const GEMINI\_API\_KEY \= "YOUR\_API\_KEY\_HERE"; // Replace with actual key
+1. 在 Google Apps Script Editor 中: **設定** (⚙️) → **Script Properties**  
+2. 新增屬性:  
+   - Property: `OPENAI_API_KEY`  
+   - Value: `sk-proj-...` (你的 OpenAI API Key)  
+3. (選填) Property: `DRIVE_FOLDER_ID` - 若未設定，系統會自動創建名為 `Re_Uniform_Images` 的資料夾。
 
 ### **API Actions:**
 
@@ -123,25 +141,29 @@ const GEMINI\_API\_KEY \= "YOUR\_API\_KEY\_HERE"; // Replace with actual key
 * **Logic**: 將資料寫入 Waitlist Sheet。  
 * **Output**: { "status": "success" }
 
-## **7\. 前端頁面規劃 (Single HTML File)**
+## **7\. 前端頁面規劃 (React SPA)**
 
-為了方便開發，請將 CSS, JS 寫在同一個 index.html 或分開成 app.js, style.css。
+### **UI Sections (React Router):**
 
-### **UI Sections (SPA 切換顯示):**
-
-1. **Home View**:  
+1. **Home View (`/`)**:  
    * Hero: 大標題 "Re:Uniform"。  
+   * **最近上傳的制服**: 顯示最新 3 筆商品卡片 + \[更多\] 按鈕 → 連到 `/items`。  
+   * **最近的需求**: 顯示最新 3 筆預約需求 + \[更多\] 按鈕 → 連到 `/waitlist`。  
    * **Story B 入口**: Search Bar (輸入框 \+ 🔍 按鈕)。  
    * **Story A 入口**: Big Floating Button (📸 賣制服)。  
-2. **Upload View (Overlay/Modal)**:  
+2. **Upload View (`/upload` - Modal/Page)**:  
    * \<input type="file" capture="environment"\> 啟動相機。  
    * Preview Image (\<img\>).  
    * Loading Spinner ("AI 正在分析您的制服...").  
    * Form: 顯示 AI 填好的結果 (School, Size, Conditions)，允許手動修改。  
    * \[確認上架\] 按鈕。  
-3. **Result View**:  
-   * 列出符合的 Mock Data 或搜尋結果。  
-   * **Empty State**: 若無結果，顯示 \[🔔 加入缺貨預約清單\] 按鈕。
+3. **Result View (`/search`)**:  
+   * 列出符合的搜尋結果。  
+   * **Empty State**: 若無結果，顯示 \[🔔 加入缺貨預約清單\] 按鈕。  
+4. **Items View (`/items`)**:  
+   * 完整列表顯示所有商品（分頁）。  
+5. **Waitlist View (`/waitlist`)**:  
+   * 完整列表顯示所有預約需求（分頁）。
 
 ## **8\. Mock Data & Testing 指引**
 
