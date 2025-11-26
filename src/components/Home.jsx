@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ItemCard from './ItemCard';
+import WaitlistCard from './WaitlistCard';
 import { callAPI, ApiActions } from '../api';
 
 export default function Home() {
@@ -113,17 +114,7 @@ export default function Home() {
                 ) : recentRequests.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {recentRequests.map((req) => (
-                            <div key={req.id} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                                <div className="flex items-start justify-between mb-3">
-                                    <h3 className="font-bold text-lg text-gray-800">{req.school}</h3>
-                                    <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">尋找中</span>
-                                </div>
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <p>• 類型: {req.type}</p>
-                                    <p>• 尺寸: {req.size}</p>
-                                    <p className="text-xs text-gray-400">{req.created_at}</p>
-                                </div>
-                            </div>
+                            <WaitlistCard key={req.id} req={req} />
                         ))}
                     </div>
                 ) : (

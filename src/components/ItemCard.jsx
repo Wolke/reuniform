@@ -59,7 +59,7 @@ export default function ItemCard({ item }) {
                         {item.conditions || '可議'}
                     </div>
                     <div className="text-xs text-gray-400">
-                        {item.created_at}
+                        {formatDate(item.created_at)}
                     </div>
                 </div>
             </div>
@@ -69,6 +69,8 @@ export default function ItemCard({ item }) {
 
 // Helper function to get type label in Chinese
 function getTypeLabel(type) {
+    if (!type) return '制服';
+    const cleanType = type.trim();
     const typeMap = {
         'sport_top_short': '運動短袖',
         'sport_top_long': '運動長袖',
@@ -83,5 +85,20 @@ function getTypeLabel(type) {
         'jacket': '外套'
     };
 
-    return typeMap[type] || type || '制服';
+    return typeMap[cleanType] || cleanType;
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return '';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    } catch (e) {
+        return dateString;
+    }
 }
