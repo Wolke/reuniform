@@ -96,13 +96,13 @@ function uploadItem(params) {
     // 生成商品 ID
     const itemId = "item_" + new Date().getTime();
     
-    // 1. 上傳圖片到 Google Drive（在 AI 分析之前，這樣即使 AI 失敗圖片也已保存）
+    // 1. 上傳圖片到 Cloudinary（在 AI 分析之前，這樣即使 AI 失敗圖片也已保存）
     let imageUrl;
     try {
-      imageUrl = uploadImageToDrive(base64Data, itemId);
-    } catch(driveError) {
-      Logger.log("Drive upload error: " + driveError.toString());
-      return { status: "error", message: "圖片上傳失敗: " + driveError.toString() };
+      imageUrl = uploadImageToCloudinary(base64Data, itemId);
+    } catch(cloudinaryError) {
+      Logger.log("Cloudinary upload error: " + cloudinaryError.toString());
+      return { status: "error", message: "圖片上傳失敗: " + cloudinaryError.toString() };
     }
     
     // 2. 呼叫 OpenAI Vision API 分析圖片
@@ -112,7 +112,7 @@ function uploadItem(params) {
       return { status: "error", message: "AI 分析失敗，請重試" };
     }
     
-    // 3. 寫入 Items Sheet（儲存 Google Drive URL 而非 base64）
+    // 3. 寫入 Items Sheet（儲存 Cloudinary URL）
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
     
     const newRow = [
@@ -126,7 +126,7 @@ function uploadItem(params) {
       aiResult.condition || 3,
       aiResult.defects || "無",
       "published",
-      imageUrl, // 儲存 Google Drive URL
+      imageUrl, // 儲存 Cloudinary URL
       new Date().toLocaleDateString('zh-TW')
     ];
     
@@ -269,6 +269,7 @@ function searchItems(params) {
         condition_score: row[7],
         defects: row[8],
         status: row[9],
+        image_url: row[10], // Google Drive URL
         created_at: row[11]
       };
       

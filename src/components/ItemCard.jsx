@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 
 export default function ItemCard({ item }) {
+    console.log('ItemCard item:', item);
+
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
             {/* 圖片 */}
@@ -11,7 +13,8 @@ export default function ItemCard({ item }) {
                         alt={`${item.school} ${item.type}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/400x600/E5E7EB/9CA3AF?text=No+Image';
+                            console.error('Image failed to load:', item.image_url);
+                            e.target.src = '';
                         }}
                     />
                 ) : (

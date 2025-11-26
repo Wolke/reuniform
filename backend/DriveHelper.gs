@@ -62,9 +62,10 @@ function uploadImageToDrive(base64String, itemId) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     
     // 取得公開存取URL
-    // 使用 uc?export=view&id= 格式可以直接顯示圖片
+    // 使用 uc?id= 格式可以直接在 <img> 標籤中顯示圖片
+    // export=download 會強制下載，我們使用不加 export 參數的格式讓瀏覽器直接顯示
     const fileId = file.getId();
-    const imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+    const imageUrl = `https://drive.google.com/uc?id=${fileId}`;
     
     Logger.log(`Image uploaded successfully: ${imageUrl}`);
     
@@ -110,7 +111,7 @@ function listUploadedImages() {
       imageList.push({
         name: file.getName(),
         id: file.getId(),
-        url: `https://drive.google.com/uc?export=view&id=${file.getId()}`,
+        url: `https://drive.google.com/uc?id=${file.getId()}`,
         size: file.getSize(),
         created: file.getDateCreated()
       });
