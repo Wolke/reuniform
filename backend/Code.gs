@@ -639,11 +639,19 @@ function testFullFlow() {
   if (searchResult.status === "success") {
     Logger.log("Intent Parsed: " + JSON.stringify(searchResult.intent));
     Logger.log("Results Found: " + searchResult.results.length);
-    if (searchResult.results.length > 0) {
-      Logger.log("First Match: " + JSON.stringify(searchResult.results[0]));
-    }
+    Logger.log("First Match: " + JSON.stringify(searchResult.results[0]));
   } else {
     Logger.log("Search Failed: " + searchResult.message);
+  }
+
+  Logger.log("\n=== 4. Testing Cloudinary Upload via Code.gs ===");
+  const testBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
+  const testItemId = 'test_code_gs_' + new Date().getTime();
+  try {
+    const url = uploadImageToCloudinary(testBase64, testItemId);
+    Logger.log("Upload Success! URL: " + url);
+  } catch (e) {
+    Logger.log("Upload Failed: " + e.toString());
   }
 }
 

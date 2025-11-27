@@ -41,20 +41,22 @@ function uploadImageToCloudinary(base64Image, itemId) {
     // 組合完整的 base64 data URI (Cloudinary API 需要這個格式)
     const base64DataUri = 'data:image/jpeg;base64,' + cleanBase64;
     
+    // Sanitize itemId to be safe for public_id and display_name
+    // Replace slashes and other unsafe characters with underscores
+    const safeId = itemId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    
     // 使用 Unsigned Upload (需要在 Cloudinary 設定 Upload Preset)
     // 這種方式不需要簽名,更簡單可靠
     const uploadUrl = `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`;
     
     // 準備 POST 資料
     // upload_preset 需要在 Cloudinary Dashboard 中創建
-    const safeItemId = itemId ? itemId.replace(/\//g, '_') : 'item_' + new Date().getTime();
-    
     const payload = {
       file: base64DataUri,
       upload_preset: 'reuniform_preset', // 需要在 Cloudinary 創建這個 preset
       folder: 'reuniform',
-      public_id: safeItemId,
-      display_name: safeItemId
+      public_id: safeId,
+      filename_override: safeId
     };
     
     const options = {
