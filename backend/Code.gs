@@ -28,6 +28,12 @@ function doPost(e) {
       case "uploadItem":
         response = uploadItem(params);
         break;
+      case "analyzeItem":
+        response = analyzeItem(params);
+        break;
+      case "publishItem":
+        response = publishItem(params);
+        break;
       case "searchItems":
         response = searchItems(params);
         break;
@@ -78,7 +84,7 @@ function doGet(e) {
 // ==================== Story A: 上架制服 (AI 視覺辨識) ====================
 
 /**
- * uploadItem - 使用 AI 分析制服圖片並上傳到 Google Drive
+ * uploadItem - 使用 AI 分析制服圖片並上傳到 Cloudinary
  * @param {Object} params - { imageBase64: string, sellerId?: string }
  */
 function uploadItem(params) {
@@ -150,6 +156,105 @@ function uploadItem(params) {
     
   } catch (error) {
     Logger.log("Error in uploadItem: " + error.toString());
+    return { status: "error", message: "上架失敗: " + error.toString() };
+  }
+}
+
+/**
+ * analyzeItem - 使用 AI 分析制服圖片，但不儲存到 Sheet
+ * @param {Object} params - { imageBase64: string }
+ */
+function analyzeItem(params) {
+  try {
+    const imageBase64 = params.imageBase64;
+    
+    if (!imageBase64) {
+      return { status: "error", message: "缺少圖片資料" };
+    }
+    
+    // 移除 data:image/xxx;base64, 前綴
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    
+    // 生成商品 ID
+    const itemId = "item_" + new Date().getTime();
+    
+    // 1. 上傳圖片到 Cloudinary
+    let imageUrl;
+    try {
+      imageUrl = uploadImageToCloudinary(base64Data, itemId);
+    } catch(cloudinaryError) {
+      Logger.log("Cloudinary upload error: " + cloudinaryError.toString());
+      return { status: "error", message: "圖片上傳失敗: " + cloudinaryError.toString() };
+    }
+    
+    // 2. 呼叫 OpenAI Vision API 分析圖片
+    const aiResult = analyzeUniformImage(base64Data);
+    
+    if (!aiResult) {
+      return { status: "error", message: "AI 分析失敗，請重試" };
+    }
+    
+    // 回傳分析結果，但不寫入 Sheet
+    return {
+      status: "success",
+      data: {
+        id: itemId,
+        school: aiResult.school,
+        type: aiResult.type,
+        gender: aiResult.gender,
+        size: aiResult.size,
+        conditions: aiResult.suggested_conditions,
+        condition: aiResult.condition,
+        defects: aiResult.defects,
+        image_url: imageUrl
+      }
+    };
+    
+  } catch (error) {
+    Logger.log("Error in analyzeItem: " + error.toString());
+    return { status: "error", message: "分析失敗: " + error.toString() };
+  }
+}
+
+/**
+ * publishItem - 將確認後的商品資訊寫入 Sheet
+ * @param {Object} params - 商品資訊
+ */
+function publishItem(params) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
+    const sellerId = params.sellerId || "user_001"; // Mock User
+    
+    // 確保必要欄位存在
+    if (!params.id || !params.image_url) {
+      return { status: "error", message: "缺少必要欄位 (id, image_url)" };
+    }
+    
+    const newRow = [
+      params.id,
+      sellerId,
+      params.school || "未知學校",
+      params.type || "unknown",
+      params.gender || "U",
+      params.size || "M",
+      params.conditions || "可議", 
+      params.condition || 3,
+      params.defects || "無",
+      "published",
+      params.image_url,
+      new Date().toLocaleDateString('zh-TW')
+    ];
+    
+    sheet.appendRow(newRow);
+    
+    return {
+      status: "success",
+      message: "商品已成功上架！",
+      data: params
+    };
+    
+  } catch (error) {
+    Logger.log("Error in publishItem: " + error.toString());
     return { status: "error", message: "上架失敗: " + error.toString() };
   }
 }
@@ -269,7 +374,7 @@ function searchItems(params) {
         condition_score: row[7],
         defects: row[8],
         status: row[9],
-        image_url: row[10], // Google Drive URL
+        image_url: row[10], // Cloudinary URL
         created_at: row[11]
       };
       
@@ -452,7 +557,7 @@ function getRecentItems() {
           conditions: row[6], // 原本是 price
           condition_score: row[7],
           defects: row[8],
-          image_url: row[10], // Google Drive URL
+          image_url: row[10], // Cloudinary URL
           created_at: row[11]
         });
       }

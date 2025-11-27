@@ -18,10 +18,25 @@ except ImportError:
     sys.exit(1)
 
 # Cloudinary configuration
-# You need to set these environment variables or edit them here
-CLOUD_NAME = os.getenv('CLOUDINARY_CLOUD_NAME', 'YOUR_CLOUD_NAME')
-API_KEY = os.getenv('CLOUDINARY_API_KEY', 'YOUR_API_KEY')
-API_SECRET = os.getenv('CLOUDINARY_API_SECRET', 'YOUR_API_SECRET')
+def load_env_file(env_path):
+    env_vars = {}
+    if os.path.exists(env_path):
+        with open(env_path, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    env_vars[key.strip()] = value.strip()
+    return env_vars
+
+# Load from .env.local if available
+project_root = Path(__file__).parent.parent
+env_local_path = project_root / '.env.local'
+env_vars = load_env_file(env_local_path)
+
+CLOUD_NAME = env_vars.get('CLOUDINARY_CLOUD_NAME') or os.getenv('CLOUDINARY_CLOUD_NAME') or 'YOUR_CLOUD_NAME'
+API_KEY = env_vars.get('CLOUDINARY_API_KEY') or os.getenv('CLOUDINARY_API_KEY') or 'YOUR_API_KEY'
+API_SECRET = env_vars.get('CLOUDINARY_API_SECRET') or os.getenv('CLOUDINARY_API_SECRET') or 'YOUR_API_SECRET'
 
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -29,14 +44,12 @@ cloudinary.config(
     api_secret=API_SECRET
 )
 
+
+
 # Image mapping: item_id -> local image path
 IMAGE_MAPPING = {
-    'ITEM001': 'haishan_sport_top.png',
-    'ITEM002': 'guangfu_uniform_pants.png',
-    'ITEM003': 'mandarin_school_dress.png',
-    'ITEM004': '../.gemini/antigravity/brain/dacd34d6-cfcd-4177-bc30-297a6b99e69f/haishan_sport_shorts_1764150612021.png',
-    'ITEM005': 'xingan_uniform_top.png',
-    'ITEM006': '../.gemini/antigravity/brain/dacd34d6-cfcd-4177-bc30-297a6b99e69f/zhonghe_jacket_1764151417165.png',
+    'ITEM004': '/Users/chienhunglin/.gemini/antigravity/brain/dacd34d6-cfcd-4177-bc30-297a6b99e69f/haishan_sport_shorts_1764150612021.png',
+    'ITEM006': '/Users/chienhunglin/.gemini/antigravity/brain/dacd34d6-cfcd-4177-bc30-297a6b99e69f/zhonghe_jacket_1764151417165.png',
 }
 
 def upload_image_to_cloudinary(image_path, public_id):
@@ -56,15 +69,29 @@ def upload_image_to_cloudinary(image_path, public_id):
             print(f"  ❌ Image file not found: {image_path}")
             return None
             
-        # Upload to Cloudinary
+        # Upload to Cloudinary using unsigned upload
         print(f"  ⬆️  Uploading {os.path.basename(image_path)}...")
-        result = cloudinary.uploader.upload(
-            image_path,
-            folder="reuniform/items",
-            public_id=public_id,
-            overwrite=True,
-            resource_type="image"
-        )
+        
+        # Try unsigned upload first
+        try:
+            result = cloudinary.uploader.unsigned_upload(
+                image_path,
+                "reuniform_preset",
+                cloud_name=CLOUD_NAME,
+                folder="reuniform/items",
+                public_id=public_id
+            )
+        except Exception as e:
+            print(f"  ⚠️  Unsigned upload failed: {e}")
+            print("  🔄 Retrying with signed upload...")
+            # Fallback to signed upload if unsigned fails (e.g. if preset doesn't allow public_id)
+            result = cloudinary.uploader.upload(
+                image_path,
+                folder="reuniform/items",
+                public_id=public_id,
+                overwrite=True,
+                resource_type="image"
+            )
         
         print(f"  ✅ Uploaded successfully: {result['secure_url']}")
         return result['secure_url']

@@ -47,10 +47,14 @@ function uploadImageToCloudinary(base64Image, itemId) {
     
     // 準備 POST 資料
     // upload_preset 需要在 Cloudinary Dashboard 中創建
+    const safeItemId = itemId ? itemId.replace(/\//g, '_') : 'item_' + new Date().getTime();
+    
     const payload = {
       file: base64DataUri,
       upload_preset: 'reuniform_preset', // 需要在 Cloudinary 創建這個 preset
-      folder: 'reuniform'
+      folder: 'reuniform',
+      public_id: safeItemId,
+      display_name: safeItemId
     };
     
     const options = {

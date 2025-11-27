@@ -4,6 +4,8 @@ export const API_URL = import.meta.env.VITE_API_URL || 'YOUR_GOOGLE_APPS_SCRIPT_
 // API Actions
 export const ApiActions = {
     UPLOAD_ITEM: 'uploadItem',
+    ANALYZE_ITEM: 'analyzeItem',
+    PUBLISH_ITEM: 'publishItem',
     SEARCH_ITEMS: 'searchItems',
     ADD_TO_WAITLIST: 'addToWaitlist',
     GET_RECENT_ITEMS: 'getRecentItems',

@@ -7,6 +7,7 @@ export default function Upload() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [analyzing, setAnalyzing] = useState(false);
+    const [publishing, setPublishing] = useState(false);
     const [aiResult, setAiResult] = useState(null);
     const [error, setError] = useState(null);
 
@@ -42,10 +43,9 @@ export default function Upload() {
             // 轉換為 Base64
             const base64 = await fileToBase64(file);
 
-            // 呼叫後端 API
-            const response = await callAPI(ApiActions.UPLOAD_ITEM, {
-                imageBase64: base64,
-                sellerId: 'user_001' // Mock User
+            // 呼叫後端 API (只分析，不上架)
+            const response = await callAPI(ApiActions.ANALYZE_ITEM, {
+                imageBase64: base64
             });
 
             if (response.status === 'success') {
@@ -54,16 +54,45 @@ export default function Upload() {
                 setError(response.message || 'AI 分析失敗');
             }
         } catch (err) {
-            setError('上傳失敗: ' + err.message);
+            setError('分析失敗: ' + err.message);
         } finally {
             setAnalyzing(false);
         }
     }
 
+    // 處理欄位變更
+    function handleInputChange(field, value) {
+        setAiResult(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    }
+
     // 確認上架
-    function handleConfirm() {
-        // AI 已經在分析時就上架了，直接導回首頁
-        navigate('/');
+    async function handleConfirm() {
+        if (!aiResult) return;
+
+        setPublishing(true);
+        setError(null);
+
+        try {
+            // 呼叫後端 API (正式上架)
+            const response = await callAPI(ApiActions.PUBLISH_ITEM, {
+                ...aiResult,
+                sellerId: 'user_001' // Mock User
+            });
+
+            if (response.status === 'success') {
+                // 成功後導回首頁
+                navigate('/');
+            } else {
+                setError(response.message || '上架失敗');
+            }
+        } catch (err) {
+            setError('上架失敗: ' + err.message);
+        } finally {
+            setPublishing(false);
+        }
     }
 
     return (
@@ -145,10 +174,10 @@ export default function Upload() {
                                 </div>
                             )}
 
-                            {/* AI 分析結果 */}
+                            {/* AI 分析結果 (可編輯) */}
                             {aiResult && !analyzing && (
                                 <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-4">✨ AI 分析結果</h3>
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">✨ 確認並編輯資訊</h3>
 
                                     <div className="space-y-4 mb-6">
                                         <div>
@@ -156,8 +185,8 @@ export default function Upload() {
                                             <input
                                                 type="text"
                                                 value={aiResult.school}
-                                                readOnly
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                onChange={(e) => handleInputChange('school', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             />
                                         </div>
 
@@ -167,8 +196,8 @@ export default function Upload() {
                                                 <input
                                                     type="text"
                                                     value={aiResult.type}
-                                                    readOnly
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                    onChange={(e) => handleInputChange('type', e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                             <div>
@@ -176,8 +205,8 @@ export default function Upload() {
                                                 <input
                                                     type="text"
                                                     value={aiResult.size}
-                                                    readOnly
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                    onChange={(e) => handleInputChange('size', e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                         </div>
@@ -185,20 +214,25 @@ export default function Upload() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-semibold text-gray-700 mb-1">性別</label>
-                                                <input
-                                                    type="text"
-                                                    value={aiResult.gender === 'M' ? '男' : aiResult.gender === 'F' ? '女' : '不拘'}
-                                                    readOnly
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
-                                                />
+                                                <select
+                                                    value={aiResult.gender}
+                                                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                >
+                                                    <option value="U">不拘</option>
+                                                    <option value="M">男</option>
+                                                    <option value="F">女</option>
+                                                </select>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">狀況評分</label>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">狀況評分 (1-5)</label>
                                                 <input
-                                                    type="text"
-                                                    value={`${aiResult.condition}/5`}
-                                                    readOnly
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                    type="number"
+                                                    min="1"
+                                                    max="5"
+                                                    value={aiResult.condition}
+                                                    onChange={(e) => handleInputChange('condition', parseInt(e.target.value))}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                 />
                                             </div>
                                         </div>
@@ -208,8 +242,8 @@ export default function Upload() {
                                             <input
                                                 type="text"
                                                 value={aiResult.conditions}
-                                                readOnly
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                onChange={(e) => handleInputChange('conditions', e.target.value)}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             />
                                         </div>
 
@@ -217,24 +251,20 @@ export default function Upload() {
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">瑕疵說明</label>
                                             <textarea
                                                 value={aiResult.defects}
-                                                readOnly
+                                                onChange={(e) => handleInputChange('defects', e.target.value)}
                                                 rows={3}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                             />
                                         </div>
-                                    </div>
-
-                                    {/* 成功訊息 */}
-                                    <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-4">
-                                        ✅ 商品已成功上架！
                                     </div>
 
                                     {/* 確認按鈕 */}
                                     <button
                                         onClick={handleConfirm}
-                                        className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-lg font-bold text-lg hover:from-green-600 hover:to-green-700 transition-all"
+                                        disabled={publishing}
+                                        className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all ${publishing ? 'opacity-70 cursor-not-allowed' : ''}`}
                                     >
-                                        返回首頁
+                                        {publishing ? '上架中...' : '確認並上架'}
                                     </button>
                                 </div>
                             )}
