@@ -1,12 +1,12 @@
 # **Re:Uniform 系統開發規格書 (Hackathon Version)**
 
-## **1\. 專案概述 (Project Overview)**
+## **1. 專案概述 (Project Overview)**
 
 專案名稱：Re:Uniform  
 核心目標：建立一個 Mobile-First 的響應式網頁，利用 AI 視覺辨識簡化二手制服上架流程，並利用 NLP 自然語言處理優化搜尋體驗。  
-開發策略：使用輕量化、無伺服器架構，以 Google 生態系 (Sheets, App Script, Gemini) 快速構建 MVP。
+開發策略：使用輕量化、無伺服器架構，以 Google 生態系 (Sheets, App Script) 搭配 Cloudinary 與 Gemini/OpenAI 快速構建 MVP。
 
-## **2\. 使用者故事 (User Stories)**
+## **2. 使用者故事 (User Stories)**
 
 系統核心邏輯分為兩大路徑，請確保 UI/UX 設計能清楚引導這兩個情境：
 
@@ -33,7 +33,7 @@
   4. **情境 2 (無貨)**：列表為空，系統顯示 **「🔔 目前缺貨，加入預約通知？」** 按鈕。  
   5. 使用者點擊加入，系統將需求存入 Waitlist。
 
-## **3\. 技術堆疊 (Tech Stack)**
+## **3. 技術堆疊 (Tech Stack)**
 
 請使用以下技術進行開發：
 
@@ -50,132 +50,141 @@
 
 * **Logic**: Google Apps Script (GAS) 部署為 Web App (doGet, doPost).  
 * **Database**: Google Sheets (作為資料庫).  
-* **AI Integration**: 直接在 GAS 中呼叫 Gemini API.  
-* **Security**: Gemini API Key 直接儲存在 GAS 腳本變數中 (Hackathon 快速實作).
+* **Image Storage**: Cloudinary (用於儲存圖片，提供 CDN 加速與優化).
+* **AI Integration**: 直接在 GAS 中呼叫 OpenAI API.  
+* **Security**: API Keys (OpenAI, Cloudinary) 儲存在 GAS Script Properties 中.
 
 ### **AI Models**
 
-* **Vision**: OpenAI gpt-4o (用於 Story A: 辨識制服圖片).  
+* **Vision**: OpenAI gpt-4o-mini (用於 Story A: 辨識制服圖片).  
 * **NLP**: OpenAI gpt-4o-mini (用於 Story B: 解析搜尋語意).
 * **API Key Storage**: Script Properties (在 GAS 中設定 `OPENAI_API_KEY`).
 
-## **4\. 系統架構 (Architecture)**
+## **4. 系統架構 (Architecture)**
 
 Data Flow:  
 \[React App (GitHub Pages)\] \--(fetch POST)--\> \[GAS Web App URL\]  
+  └─> \[Cloudinary\] (圖片儲存 & CDN)  
   └─> \[OpenAI API\] (圖片辨識 & NLP)  
-  └─> \[Google Drive\] (圖片儲存)  
   └─> \[Google Sheets\] (資料庫)
 
 1. **前端 (React)**：負責 UI 呈現、拍照、將圖片轉為 Base64 傳送給後端。使用 React Router 進行頁面路由。  
-2. **後端 (GAS)**：接收前端 JSON 請求，根據 action 分流處理。圖片上傳至 Google Drive 並取得公開 URL，再呼叫 OpenAI API 進行分析。  
-3. **圖片儲存 (Drive)**：使用 Google Drive API，每張圖片儲存為獨立檔案並設定公開分享，返回 URL 存入 Sheets。  
-4. **資料庫 (Sheets)**：每個 Tab 代表一個資料表，儲存商品資訊（含 Google Drive 圖片 URL）。
+2. **後端 (GAS)**：接收前端 JSON 請求，根據 action 分流處理。  
+3. **圖片儲存 (Cloudinary)**：使用 Cloudinary API (Unsigned Upload)，將 Base64 圖片上傳並取得 Secure URL，再存入 Sheets。  
+4. **資料庫 (Sheets)**：每個 Tab 代表一個資料表，儲存商品資訊（含 Cloudinary 圖片 URL）。
 
-## **5\. 資料庫設計 (Google Sheets Structure)**
+## **5. 資料庫設計 (Google Sheets Structure)**
 
-請在 Google Sheet 中建立以下三個工作表 (Tabs)，並預填 Mock Data：
+請在 Google Sheet 中建立以下三個工作表 (Tabs)：
 
-### **Tab 1: Items (商品表 \- 支援 Story A)**
+### **Tab 1: Items (商品表 - 支援 Story A)**
 
-| id | seller\_id | school | type | gender | size | conditions | condition\_score | defects | status | image\_url | created\_at |
+| id | seller_id | school | type | gender | size | conditions | condition_score | defects | status | image_url | created_at |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| *ITEM001* | *user\_001* | *新北市板橋區海山國小* | *sport\_top* | *F* | *140* | *150元* | *4* | *無明顯瑕疵* | *published* | *https://drive.google.com/...* | *2025-10-01* |
-| *ITEM002* | *user\_002* | *新北市板橋區光復國小* | *uniform\_bottom* | *M* | *M* | *200元* | *5* | *無* | *published* | *https://drive.google.com/...* | *2025-10-02* |
+| *item_123* | *user_001* | *新北市板橋區海山國小* | *sport_top* | *F* | *140* | *150元* | *4* | *無明顯瑕疵* | *published* | *https://res.cloudinary.com/...* | *2025-11-27* |
 
-**Mock Data CSV**: 請直接複製 `backend/mock_data_items.csv` 內容貼入 Google Sheets。
+### **Tab 2: Waitlist (預約單 - 支援 Story B)**
 
-### **Tab 2: Waitlist (預約單 \- 支援 Story B)**
-
-| id | requester\_id | target\_school | target\_type | target\_size | status | created\_at |
+| id | requester_id | target_school | target_type | target_size | status | created_at |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
-| *WAIT001* | *user\_003* | *海山國小* | *dress* | *130* | *active* | *2025-10-05* |
+| *wait_456* | *user_003* | *海山國小* | *dress* | *130* | *active* | *2025-11-27* |
 
-**Mock Data CSV**: 請直接複製 `backend/mock_data_waitlist.csv` 內容貼入 Google Sheets。
+### **Tab 3: Users (使用者 - 簡易版)**
 
-### **Tab 3: Users (使用者 \- 簡易版)**
-
-| uid | name | contact\_info |
+| uid | name | contact_info |
 | :---- | :---- | :---- |
-| *user\_001* | *林爸爸* | *Line: lin\_papa* |
+| *user_001* | *林爸爸* | *Line: lin_papa* |
 
-**Mock Data CSV**: 請直接複製 `backend/mock_data_users.csv` 內容貼入 Google Sheets。
+## **6. 後端 API 設計 (Google Apps Script)**
 
-## **6\. 後端 API 設計 (Google Apps Script)**
+請參考 `backend/Code.gs` 和 `backend/CloudinaryHelper.gs` 的完整實作。
 
-請參考 `backend/Code.gs` 和 `backend/DriveHelper.gs` 的完整實作。
-
-**API Key 設定（Script Properties）**：
+**Script Properties 設定**：
 
 1. 在 Google Apps Script Editor 中: **設定** (⚙️) → **Script Properties**  
-2. 新增屬性:  
-   - Property: `OPENAI_API_KEY`  
-   - Value: `sk-proj-...` (你的 OpenAI API Key)  
-3. (選填) Property: `DRIVE_FOLDER_ID` - 若未設定，系統會自動創建名為 `Re_Uniform_Images` 的資料夾。
+2. 必須設定以下屬性:  
+   - `OPENAI_API_KEY`: OpenAI API Key (sk-...)  
+   - `CLOUDINARY_CLOUD_NAME`: Cloudinary Cloud Name  
+   - `CLOUDINARY_API_KEY`: Cloudinary API Key (若需要刪除功能)  
+   - `CLOUDINARY_API_SECRET`: Cloudinary API Secret (若需要刪除功能)
 
 ### **API Actions:**
 
-#### **Action 1: uploadItem (對應 Story A)**
+#### **Action 1: uploadItem (對應 Story A - 直接上架)**
 
-* **Input**: { "action": "uploadItem", "imageBase64": "..." }  
+* **Input**: `{ "action": "uploadItem", "imageBase64": "..." }`  
 * **Logic**:  
-  1. 呼叫 **Gemini 2.5 Flash (Vision)** 分析圖片。  
-  2. Prompt: "Analyze this school uniform. Return JSON with fields: school (Taiwanese school name), type (sport_top_short/sport_top_long/sport_bottom_short/sport_bottom_long/uniform_top_short/uniform_top_long/uniform_bottom_short/uniform_bottom_long/uniform_skirt/dress/jacket), gender, size, condition (1-5), defects, suggested_conditions."  
-  3. 將 Gemini 回傳的 JSON 資料寫入 Items Sheet。  
-* **Output**: { "status": "success", "data": { ...item\_details } }
+  1. 呼叫 `CloudinaryHelper` 將圖片上傳至 Cloudinary。  
+  2. 呼叫 **OpenAI gpt-4o-mini (Vision)** 分析圖片。  
+  3. 將 Cloudinary URL 與 AI 分析結果寫入 Items Sheet。  
+* **Output**: `{ "status": "success", "data": { ...item_details } }`
 
-#### **Action 2: searchItems (對應 Story B)**
+#### **Action 2: analyzeItem (對應 Story A - 僅分析)**
 
-* **Input**: { "action": "searchItems", "query": "我要找海山國小女生的運動服" }  
+* **Input**: `{ "action": "analyzeItem", "imageBase64": "..." }`  
 * **Logic**:  
-  1. 呼叫 **Gemini 2.5 Flash (Text)** 解析 Intent。  
-  2. Prompt: "Extract search keywords from: '${query}'. Return JSON: { school, type, gender, size\_approx }."  
-  3. 讀取 Items Sheet 所有資料。  
-  4. 在 GAS 中進行簡單的 Filter (比對 school, type 等)。  
-  5. 若無結果，回傳 suggestWaitlist: true。  
-* **Output**: { "status": "success", "results": \[...\], "suggestWaitlist": boolean }
+  1. 呼叫 `CloudinaryHelper` 將圖片上傳至 Cloudinary。  
+  2. 呼叫 **OpenAI gpt-4o-mini (Vision)** 分析圖片。  
+  3. 回傳分析結果與圖片 URL，**不**寫入 Sheet。  
+* **Output**: `{ "status": "success", "data": { ...item_details, "image_url": "..." } }`
 
-#### **Action 3: addToWaitlist (對應 Story B \- 無貨時)**
+#### **Action 3: publishItem (對應 Story A - 確認發布)**
 
-* **Input**: { "action": "addToWaitlist", "school": "...", "type": "..." }  
+* **Input**: `{ "action": "publishItem", "id": "...", "image_url": "...", ...other_fields }`  
+* **Logic**: 將前端確認後的商品資訊寫入 Items Sheet。  
+* **Output**: `{ "status": "success", "data": ... }`
+
+#### **Action 4: searchItems (對應 Story B)**
+
+* **Input**: `{ "action": "searchItems", "query": "我要找海山國小女生的運動服" }`  
+* **Logic**:  
+  1. 呼叫 **OpenAI gpt-4o-mini (Text)** 解析 Intent。  
+  2. 讀取 Items Sheet 所有資料。  
+  3. 在 GAS 中進行篩選 (比對 school, type, gender 等)。  
+  4. 若無結果，回傳 `suggestWaitlist: true`。  
+* **Output**: `{ "status": "success", "results": [...], "suggestWaitlist": boolean }`
+
+#### **Action 5: addToWaitlist (對應 Story B - 無貨時)**
+
+* **Input**: `{ "action": "addToWaitlist", "school": "...", "type": "..." }`  
 * **Logic**: 將資料寫入 Waitlist Sheet。  
-* **Output**: { "status": "success" }
+* **Output**: `{ "status": "success" }`
 
-## **7\. 前端頁面規劃 (React SPA)**
+## **7. 前端頁面規劃 (React SPA)**
 
 ### **UI Sections (React Router):**
 
 1. **Home View (`/`)**:  
-   * Hero: 大標題 "Re:Uniform"。  
-   * **最近上傳的制服**: 顯示最新 3 筆商品卡片 + \[更多\] 按鈕 → 連到 `/items`。  
-   * **最近的需求**: 顯示最新 3 筆預約需求 + \[更多\] 按鈕 → 連到 `/waitlist`。  
-   * **Story B 入口**: Search Bar (輸入框 \+ 🔍 按鈕)。  
-   * **Story A 入口**: Big Floating Button (📸 賣制服)。  
-2. **Upload View (`/upload` - Modal/Page)**:  
-   * \<input type="file" capture="environment"\> 啟動相機。  
-   * Preview Image (\<img\>).  
-   * Loading Spinner ("AI 正在分析您的制服...").  
-   * Form: 顯示 AI 填好的結果 (School, Size, Conditions)，允許手動修改。  
-   * \[確認上架\] 按鈕。  
+   - Hero Section: "Re:Uniform" 大標題。  
+   - **最近上傳**: 顯示最新商品卡片。  
+   - **最近需求**: 顯示最新預約需求。  
+   - **Story B 入口**: Search Bar。  
+   - **Story A 入口**: Big Floating Button (📸 賣制服)。  
+
+2. **Upload View (`/upload`)**:  
+   - 拍照/上傳介面。  
+   - Loading State (AI 分析中)。  
+   - 編輯/確認表單 (顯示 AI 辨識結果)。  
+   - 發布成功頁面。  
+
 3. **Result View (`/search`)**:  
-   * 列出符合的搜尋結果。  
-   * **Empty State**: 若無結果，顯示 \[🔔 加入缺貨預約清單\] 按鈕。  
+   - 搜尋結果列表。  
+   - Empty State: 顯示 [加入缺貨預約] 按鈕。  
+
 4. **Items View (`/items`)**:  
-   * 完整列表顯示所有商品（分頁）。  
+   - 完整商品列表。  
+
 5. **Waitlist View (`/waitlist`)**:  
-   * 完整列表顯示所有預約需求（分頁）。
+   - 完整預約需求列表。  
 
-## **8\. Mock Data & Testing 指引**
+## **8. 開發注意事項**
 
-由於是黑克松，請在前端 JS 預設一些變數，方便 demo：
+1. **Cloudinary Setup**:  
+   - 需在 Cloudinary Dashboard 建立一個 **Unsigned Upload Preset** (例如 `reuniform_preset`)。  
+   - 將 Cloud Name 設定在 GAS Script Properties。
 
-1. **Mock User**: 預設 currentUserId \= "user\_001"。  
-2. **Mock Image**: 可以在前端準備一個 base64 string 範例，如果相機失敗可以用來測試 AI API。
+2. **OpenAI Setup**:  
+   - 確保 GAS Script Properties 中有有效的 `OPENAI_API_KEY`。  
 
-## **9\. 開發指令 (Prompt for AI)**
-
-請依照上述規格：
-
-1. 先提供 Code.gs 的完整程式碼 (包含 Gemini API 呼叫邏輯與 Sheet 操作)。  
-2. 接著提供 index.html, style.css, app.js 的完整前端程式碼。  
-3. 確保前端使用 fetch 呼叫 GAS Web App URL (請預留 const API\_URL \= "..." 變數)。
+3. **Mock Data**:  
+   - 前端開發時可使用 `src/api.js` 中的 Mock Data 或直接呼叫後端 API (需設定 `VITE_API_URL`)。
