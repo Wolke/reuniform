@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { UNIFORM_TYPE_MAP } from '../constants';
 
-export default function ItemForm({ initialData, onSubmit, submitLabel = '確認並上架', loading = false }) {
+export default function ItemForm({ initialData, onSubmit, submitLabel = '確認並上架', loading = false, showStatus = false }) {
     const [formData, setFormData] = useState({
         school: '',
         type: '',
@@ -10,6 +10,7 @@ export default function ItemForm({ initialData, onSubmit, submitLabel = '確認�
         condition: 3,
         conditions: '',
         defects: '',
+        status: 'published',
         ...initialData
     });
 
@@ -118,6 +119,21 @@ export default function ItemForm({ initialData, onSubmit, submitLabel = '確認�
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
+
+                {showStatus && (
+                    <div className="mb-6">
+                        <label className="block text-sm font-semibold text-gray-700 mb-1">商品狀態</label>
+                        <select
+                            value={formData.status}
+                            onChange={(e) => handleChange('status', e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="published">上架中</option>
+                            <option value="unshelved">不上架</option>
+                            <option value="completed">交易完成</option>
+                        </select>
+                    </div>
+                )}
             </div>
 
             {/* 確認按鈕 */}

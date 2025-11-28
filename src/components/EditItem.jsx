@@ -96,6 +96,7 @@ export default function EditItem() {
                         onSubmit={handleSave}
                         loading={saving}
                         submitLabel="儲存變更"
+                        showStatus={true}
                     />
                 </div>
             </div>
