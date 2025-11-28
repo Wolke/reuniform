@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { callAPI, ApiActions } from '../api';
+import { callAPI, ApiActions, getMyWaitlist, updateWaitlist } from '../api';
 
 const UNIFORM_TYPES = [
     { value: 'any', label: '不拘' },
@@ -20,30 +20,66 @@ const UNIFORM_TYPES = [
 ];
 
 export default function RequestForm() {
+    const { id } = useParams(); // If present, we are editing
     const navigate = useNavigate();
     const location = useLocation();
     const { user } = useAuth();
 
+    const isEditing = !!id;
+
     const [formData, setFormData] = useState({
         school: '',
         type: '',
-        size: ''
+        size: '',
+        status: 'active'
     });
     const [loading, setLoading] = useState(false);
+    const [initialLoading, setInitialLoading] = useState(isEditing);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // Pre-fill from location state if available (e.g. from Search redirect)
-        if (location.state?.initialData) {
+        if (isEditing && user) {
+            // Load existing data
+            if (location.state?.request) {
+                const { target_school, target_type, target_size, status } = location.state.request;
+                setFormData({
+                    school: target_school,
+                    type: target_type,
+                    size: target_size,
+                    status: status || 'active'
+                });
+                setInitialLoading(false);
+            } else {
+                // Fetch from API
+                getMyWaitlist(user.line_user_id).then(list => {
+                    const req = list.find(r => r.id === id);
+                    if (req) {
+                        setFormData({
+                            school: req.target_school,
+                            type: req.target_type,
+                            size: req.target_size,
+                            status: req.status || 'active'
+                        });
+                    } else {
+                        setError('找不到此需求單');
+                    }
+                }).catch(err => {
+                    setError('載入失敗: ' + err.message);
+                }).finally(() => {
+                    setInitialLoading(false);
+                });
+            }
+        } else if (location.state?.initialData) {
+            // Pre-fill from search
             const { school, type, size_approx } = location.state.initialData;
             setFormData(prev => ({
                 ...prev,
                 school: school || '',
-                type: type || '', // Note: type might not match our select values if it came from raw AI text, but we'll try
+                type: type || '',
                 size: size_approx || ''
             }));
         }
-    }, [location.state]);
+    }, [isEditing, user, id, location.state]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -65,25 +101,40 @@ export default function RequestForm() {
         }
 
         try {
-            const response = await callAPI(ApiActions.ADD_TO_WAITLIST, {
-                school: formData.school,
-                type: formData.type,
-                size: formData.size,
-                requesterId: user.line_user_id
-            });
-
-            if (response.status === 'success') {
-                alert('✅ 需求單已送出！');
-                navigate('/waitlist');
+            if (isEditing) {
+                await updateWaitlist({
+                    id,
+                    requesterId: user.line_user_id,
+                    school: formData.school,
+                    type: formData.type,
+                    size: formData.size,
+                    status: formData.status
+                });
+                alert('✅ 需求單已更新！');
+                navigate('/profile');
             } else {
-                setError(response.message || '送出失敗，請稍後再試');
+                const response = await callAPI(ApiActions.ADD_TO_WAITLIST, {
+                    school: formData.school,
+                    type: formData.type,
+                    size: formData.size,
+                    requesterId: user.line_user_id
+                });
+
+                if (response.status === 'success') {
+                    alert('✅ 需求單已送出！');
+                    navigate('/profile'); // Redirect to profile to see the list
+                } else {
+                    setError(response.message || '送出失敗，請稍後再試');
+                }
             }
         } catch (err) {
-            setError('發生錯誤，請檢查網路連線');
+            setError('發生錯誤: ' + err.message);
         } finally {
             setLoading(false);
         }
     };
+
+    if (initialLoading) return <div className="p-8 text-center">載入中...</div>;
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
@@ -96,7 +147,9 @@ export default function RequestForm() {
                 </button>
 
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-6">填寫需求單</h1>
+                    <h1 className="text-2xl font-bold text-gray-800 mb-6">
+                        {isEditing ? '編輯需求單' : '填寫需求單'}
+                    </h1>
 
                     {error && (
                         <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">
@@ -149,6 +202,22 @@ export default function RequestForm() {
                             />
                         </div>
 
+                        {isEditing && (
+                            <div>
+                                <label className="block text-gray-700 font-medium mb-2">狀態</label>
+                                <select
+                                    name="status"
+                                    value={formData.status}
+                                    onChange={handleChange}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="active">等待中</option>
+                                    <option value="completed">已完成</option>
+                                    <option value="cancelled">已取消</option>
+                                </select>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
                             disabled={loading}
@@ -157,7 +226,7 @@ export default function RequestForm() {
                                 : 'bg-blue-600 hover:bg-blue-700'
                                 }`}
                         >
-                            {loading ? '送出中...' : '送出需求'}
+                            {loading ? '處理中...' : (isEditing ? '儲存變更' : '送出需求')}
                         </button>
                     </form>
                 </div>

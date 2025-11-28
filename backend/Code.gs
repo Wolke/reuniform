@@ -71,6 +71,12 @@ function doPost(e) {
       case "updateContactInfo":
         response = updateContactInfo(params);
         break;
+      case "updateItem":
+        response = updateItem(params);
+        break;
+      case "updateWaitlist":
+        response = updateWaitlist(params);
+        break;
       default:
         response = {
           status: "error",
@@ -281,6 +287,63 @@ function publishItem(params) {
   } catch (error) {
     Logger.log("Error in publishItem: " + error.toString());
     return { status: "error", message: "上架失敗: " + error.toString() };
+  }
+}
+
+/**
+ * updateItem - 更新已上架的商品資訊
+ * @param {Object} params - 商品資訊 (必須包含 id, sellerId)
+ */
+function updateItem(params) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_ITEMS);
+    const sellerId = params.sellerId;
+    const itemId = params.id;
+    
+    if (!itemId || !sellerId) {
+      return { status: "error", message: "缺少必要參數 (id, sellerId)" };
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    
+    // 尋找對應的商品
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === itemId) {
+        // 驗證賣家身分
+        if (data[i][1] !== sellerId) {
+          return { status: "error", message: "無權限修改此商品" };
+        }
+        rowIndex = i + 1; // Sheet row index is 1-based
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      return { status: "error", message: "找不到指定的商品" };
+    }
+    
+    // 更新欄位 (只更新允許修改的欄位)
+    // 欄位順序: ID, SellerID, School, Type, Gender, Size, Conditions, Condition, Defects, Status, ImageURL, CreatedAt
+    
+    if (params.school) sheet.getRange(rowIndex, 3).setValue(params.school);
+    if (params.type) sheet.getRange(rowIndex, 4).setValue(params.type);
+    if (params.gender) sheet.getRange(rowIndex, 5).setValue(params.gender);
+    if (params.size) sheet.getRange(rowIndex, 6).setValue(params.size);
+    if (params.conditions) sheet.getRange(rowIndex, 7).setValue(params.conditions);
+    if (params.condition) sheet.getRange(rowIndex, 8).setValue(params.condition);
+    if (params.defects) sheet.getRange(rowIndex, 9).setValue(params.defects);
+    if (params.status) sheet.getRange(rowIndex, 10).setValue(params.status);
+    
+    return {
+      status: "success",
+      message: "商品資訊已更新",
+      data: params
+    };
+    
+  } catch (error) {
+    Logger.log("Error in updateItem: " + error.toString());
+    return { status: "error", message: "更新失敗: " + error.toString() };
   }
 }
 
@@ -545,6 +608,59 @@ function addToWaitlist(params) {
   } catch (error) {
     Logger.log("Error in addToWaitlist: " + error.toString());
     return { status: "error", message: "加入預約失敗: " + error.toString() };
+  }
+}
+
+/**
+ * updateWaitlist - 更新預約需求
+ * @param {Object} params - { id, requesterId, school, type, size, status }
+ */
+function updateWaitlist(params) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_WAITLIST);
+    const requesterId = params.requesterId;
+    const waitlistId = params.id;
+    
+    if (!waitlistId || !requesterId) {
+      return { status: "error", message: "缺少必要參數 (id, requesterId)" };
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    
+    // 尋找對應的需求
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === waitlistId) {
+        // 驗證建立者身分
+        if (data[i][1] !== requesterId) {
+          return { status: "error", message: "無權限修改此需求" };
+        }
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    
+    if (rowIndex === -1) {
+      return { status: "error", message: "找不到指定的需求" };
+    }
+    
+    // 更新欄位
+    // 欄位順序: ID, RequesterID, School, Type, Size, Status, CreatedAt
+    
+    if (params.school) sheet.getRange(rowIndex, 3).setValue(params.school);
+    if (params.type) sheet.getRange(rowIndex, 4).setValue(params.type);
+    if (params.size) sheet.getRange(rowIndex, 5).setValue(params.size);
+    if (params.status) sheet.getRange(rowIndex, 6).setValue(params.status);
+    
+    return {
+      status: "success",
+      message: "需求單已更新",
+      data: params
+    };
+    
+  } catch (error) {
+    Logger.log("Error in updateWaitlist: " + error.toString());
+    return { status: "error", message: "更新失敗: " + error.toString() };
   }
 }
 

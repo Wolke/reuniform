@@ -16,7 +16,9 @@ export const ApiActions = {
     GET_MY_WAITLIST: 'getMyWaitlist',
     GET_ITEM_CONTACT: 'getItemContact',
     GET_WAITLIST_CONTACT: 'getWaitlistContact',
-    UPDATE_CONTACT_INFO: 'updateContactInfo'
+    UPDATE_CONTACT_INFO: 'updateContactInfo',
+    UPDATE_ITEM: 'updateItem',
+    UPDATE_WAITLIST: 'updateWaitlist'
 };
 
 // API Helper Functions
@@ -113,4 +115,20 @@ export async function updateContactInfo(userId, contactInfo) {
         return response.data;
     }
     throw new Error(response.message || '無法更新聯絡資訊');
+}
+
+export async function updateItem(itemData) {
+    const response = await callAPI(ApiActions.UPDATE_ITEM, itemData);
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法更新商品資訊');
+}
+
+export async function updateWaitlist(requestData) {
+    const response = await callAPI(ApiActions.UPDATE_WAITLIST, requestData);
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法更新預約資訊');
 }

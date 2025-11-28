@@ -206,6 +206,24 @@ function UserProfile() {
                                     <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>
                                         狀態: {item.status === 'published' ? '已發布' : '草稿'}
                                     </p>
+                                    <Link
+                                        to={`/edit-item/${item.id}`}
+                                        state={{ item }}
+                                        style={{
+                                            display: 'block',
+                                            textAlign: 'center',
+                                            marginTop: '10px',
+                                            padding: '8px',
+                                            backgroundColor: '#f8f9fa',
+                                            color: '#333',
+                                            textDecoration: 'none',
+                                            borderRadius: '4px',
+                                            fontSize: '14px',
+                                            border: '1px solid #ddd'
+                                        }}
+                                    >
+                                        編輯商品
+                                    </Link>
                                 </div>
                             </div>
                         ))}
@@ -239,6 +257,23 @@ function UserProfile() {
                                 <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>
                                     建立時間: {wait.created_at}
                                 </p>
+                                <Link
+                                    to={`/edit-waitlist/${wait.id}`}
+                                    state={{ request: wait }}
+                                    style={{
+                                        display: 'inline-block',
+                                        marginTop: '10px',
+                                        padding: '4px 12px',
+                                        backgroundColor: '#f8f9fa',
+                                        color: '#333',
+                                        textDecoration: 'none',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        border: '1px solid #ddd'
+                                    }}
+                                >
+                                    編輯需求
+                                </Link>
                             </div>
                         ))}
                     </div>

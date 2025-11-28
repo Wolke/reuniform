@@ -9,6 +9,8 @@ import Waitlist from './components/Waitlist';
 import AuthCallback from './components/AuthCallback';
 import UserProfile from './components/UserProfile';
 import RequestForm from './components/RequestForm';
+import EditItem from './components/EditItem';
+import ItemCard from './components/ItemCard';
 
 function ContactInfoReminder() {
   const { user } = useAuth();
@@ -43,6 +45,8 @@ function App() {
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/profile" element={<UserProfile />} />
           <Route path="/waitlist/new" element={<RequestForm />} />
+          <Route path="/edit-item/:id" element={<EditItem />} />
+          <Route path="/edit-waitlist/:id" element={<RequestForm />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
