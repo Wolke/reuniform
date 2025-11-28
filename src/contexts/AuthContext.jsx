@@ -39,9 +39,14 @@ export const AuthProvider = ({ children }) => {
       if (LiffAuth.isLoggedIn()) {
         const profile = await LiffAuth.getProfile();
         if (profile) {
+          // First set local profile to show something immediately
           setUser(profile);
-          // Sync with backend to ensure data is up to date
-          LiffAuth.syncUser(profile);
+
+          // Sync with backend to ensure data is up to date (including contact_info)
+          const backendUser = await LiffAuth.syncUser(profile);
+          if (backendUser) {
+            setUser(backendUser);
+          }
         }
       }
     } catch (error) {
@@ -62,7 +67,14 @@ export const AuthProvider = ({ children }) => {
       // If login() returns null, it means redirection happened
       // Profile will be set after redirect
       if (profile) {
+        // First set local profile
         setUser(profile);
+
+        // Sync with backend
+        const backendUser = await LiffAuth.syncUser(profile);
+        if (backendUser) {
+          setUser(backendUser);
+        }
       }
     } catch (error) {
       console.error('Login failed:', error);

@@ -221,14 +221,16 @@ function clearLoginState() {
  * @param {Object} profile User profile
  */
 export async function syncUser(profile) {
-    if (!profile) return;
+    if (!profile) return null;
 
     try {
         const { registerLiffUser } = await import('./api.js');
-        await registerLiffUser(profile);
+        const backendUser = await registerLiffUser(profile);
         console.log('✅ User registered/updated in backend');
+        return backendUser;
     } catch (apiError) {
         console.error('Failed to register user in backend:', apiError);
         // Don't fail if backend fails, just log it
+        return null;
     }
 }

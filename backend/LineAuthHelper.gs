@@ -163,12 +163,18 @@ function saveOrUpdateUser(profile) {
       }
     }
     
+    // 決定 contact_info: 若是舊使用者，使用 Sheet 中的資料；若是新使用者，預設為空 (由使用者自行設定)
+    let contactInfo = "";
+    if (userRow !== -1) {
+      contactInfo = data[userRow - 1][3]; // Column 4 (Index 3)
+    }
+
     const now = new Date().toISOString();
     const userData = {
       line_user_id: profile.userId,
       display_name: profile.displayName,
       picture_url: profile.pictureUrl || "",
-      contact_info: profile.statusMessage || "", // 使用狀態訊息作為聯絡資訊
+      contact_info: contactInfo,
       created_at: userRow === -1 ? now : data[userRow - 1][4],
       last_login: now
     };
