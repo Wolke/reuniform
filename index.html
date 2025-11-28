@@ -10,6 +10,18 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- GitHub Pages SPA 路由處理 -->
+  <script>
+    // 處理從 404.html 的重定向
+    (function () {
+      var redirect = sessionStorage.getItem('redirectPath');
+      sessionStorage.removeItem('redirectPath');
+      if (redirect && redirect !== '/') {
+        history.replaceState(null, null, redirect.replace(/~and~/g, '&'));
+      }
+    })();
+  </script>
+
   <title>Re:Uniform - 二手制服循環平台</title>
 </head>
 

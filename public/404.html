@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8">
+  <title>Re:Uniform - 二手制服循環平台</title>
+  <script>
+    // GitHub Pages SPA 路由解決方案
+    // 將所有 404 請求重定向到 index.html
+    // 參考: https://github.com/rafgraph/spa-github-pages
+    
+    const pathSegmentsToKeep = 1; // GitHub repo name
+    const l = window.location;
+    
+    // 保存原始路徑到 sessionStorage
+    sessionStorage.setItem(
+      'redirectPath',
+      l.pathname.slice(0, l.pathname.lastIndexOf('/') + 1) +
+      l.pathname.slice(l.pathname.lastIndexOf('/') + 1).replace(/&/g, '~and~') +
+      l.search.replace(/&/g, '~and~') +
+      l.hash
+    );
+    
+    // 重定向到 index.html
+    l.replace(
+      l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+      l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?redirect=1'
+    );
+  </script>
+</head>
+<body>
+  <!-- GitHub Pages 404 處理 -->
+</body>
+</html>

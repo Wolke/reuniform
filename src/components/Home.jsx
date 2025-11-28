@@ -1,15 +1,77 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ItemCard from './ItemCard';
 import WaitlistCard from './WaitlistCard';
-import { callAPI, ApiActions } from '../api';
+import { callAPI, ApiActions, verifyLineLogin } from '../api';
 
 export default function Home() {
     const [recentItems, setRecentItems] = useState([]);
     const [recentRequests, setRecentRequests] = useState([]);
     const [loading, setLoading] = useState(true);
-    const { user, login, isAuthenticated } = useAuth();
+    const [authLoading, setAuthLoading] = useState(false);
+    const { user, login, isAuthenticated, saveUser } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+
+    // 處理 LINE Login callback (因為 GitHub Pages 不支援 /auth/callback 路由)
+    useEffect(() => {
+        const handleLineCallback = async () => {
+            const code = searchParams.get('code');
+            const state = searchParams.get('state');
+            const error = searchParams.get('error');
+
+            // 如果 URL 中沒有這些參數,表示不是 callback,直接返回
+            if (!code && !error) return;
+
+            setAuthLoading(true);
+
+            // 檢查錯誤
+            if (error) {
+                console.error('LINE Login error:', error);
+                alert('登入失敗：' + error);
+                // 清除 URL 參數
+                setSearchParams({});
+                setAuthLoading(false);
+                return;
+            }
+
+            // 驗證 state
+            const storedState = sessionStorage.getItem('line_state');
+            if (!state || state !== storedState) {
+                console.error('State mismatch');
+                alert('登入驗證失敗，請重試');
+                setSearchParams({});
+                setAuthLoading(false);
+                return;
+            }
+
+            try {
+                // 呼叫後端驗證並獲取使用者資訊
+                const userData = await verifyLineLogin(code);
+
+                // 儲存使用者資訊
+                saveUser(userData);
+
+                // 清除 session storage
+                sessionStorage.removeItem('line_state');
+                sessionStorage.removeItem('line_nonce');
+
+                // 清除 URL 參數
+                setSearchParams({});
+
+                alert('登入成功！歡迎 ' + userData.display_name);
+            } catch (error) {
+                console.error('Failed to verify LINE login:', error);
+                alert('登入處理失敗：' + error.message);
+                setSearchParams({});
+            } finally {
+                setAuthLoading(false);
+            }
+        };
+
+        handleLineCallback();
+    }, [searchParams, setSearchParams, saveUser]);
 
     useEffect(() => {
         loadData();
@@ -31,6 +93,18 @@ export default function Home() {
         }
 
         setLoading(false);
+    }
+
+    // 如果正在處理 LINE callback,顯示載入畫面
+    if (authLoading) {
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-green-500 border-t-transparent mb-4"></div>
+                    <p className="text-xl text-gray-700 font-semibold">正在處理 LINE 登入...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
