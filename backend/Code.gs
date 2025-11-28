@@ -65,6 +65,9 @@ function doPost(e) {
       case "getItemContact":
         response = getItemContact(params);
         break;
+      case "updateContactInfo":
+        response = updateContactInfo(params);
+        break;
       default:
         response = {
           status: "error",
@@ -677,3 +680,30 @@ function testFullFlow() {
 // ==================== Note: LINE Login Functions ====================
 // LINE Login related functions have been moved to LineAuthHelper.gs
 // Please ensure LineAuthHelper.gs is included in your Apps Script project
+
+/**
+ * updateContactInfo - 更新使用者聯絡資訊
+ * @param {Object} params - { userId: string, contactInfo: string }
+ */
+function updateContactInfo(params) {
+  try {
+    const userId = params.userId;
+    const contactInfo = params.contactInfo;
+    
+    if (!userId || !contactInfo) {
+      return { status: "error", message: "缺少必要參數" };
+    }
+    
+    const updatedUser = updateUserContact(userId, contactInfo);
+    
+    return {
+      status: "success",
+      message: "聯絡資訊已更新",
+      data: updatedUser
+    };
+    
+  } catch (error) {
+    Logger.log("Error in updateContactInfo: " + error.toString());
+    return { status: "error", message: "更新失敗: " + error.toString() };
+  }
+}

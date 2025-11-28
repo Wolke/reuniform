@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getMyItems, getMyWaitlist } from '../api';
+import { getMyItems, getMyWaitlist, updateContactInfo } from '../api';
 
 function UserProfile() {
-    const { user, logout } = useAuth();
+    const { user, logout, saveUser } = useAuth();
     const [myItems, setMyItems] = useState([]);
     const [myWaitlist, setMyWaitlist] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Editing state
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContactInfo, setEditContactInfo] = useState('');
+    const [saving, setSaving] = useState(false);
+
     useEffect(() => {
         if (user) {
             loadUserData();
+            setEditContactInfo(user.contact_info || '');
         }
     }, [user]);
 
@@ -28,6 +34,21 @@ function UserProfile() {
             console.error('Failed to load user data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleSaveContactInfo = async () => {
+        setSaving(true);
+        try {
+            const updatedUser = await updateContactInfo(user.line_user_id, editContactInfo);
+            saveUser(updatedUser);
+            setIsEditing(false);
+            alert('聯絡資訊已更新！');
+        } catch (error) {
+            console.error('Update failed:', error);
+            alert('更新失敗，請稍後再試。');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -67,21 +88,94 @@ function UserProfile() {
                 <div style={{ flex: 1 }}>
                     <h2 style={{ margin: '0 0 10px 0' }}>{user.display_name}</h2>
                     <p style={{ margin: 0, color: '#666' }}>LINE ID: {user.line_user_id}</p>
+
+                    <div style={{ marginTop: '10px' }}>
+                        {isEditing ? (
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <input
+                                    type="text"
+                                    value={editContactInfo}
+                                    onChange={(e) => setEditContactInfo(e.target.value)}
+                                    placeholder="輸入聯絡資訊 (例如 Line ID)"
+                                    style={{
+                                        padding: '5px',
+                                        borderRadius: '4px',
+                                        border: '1px solid #ccc',
+                                        flex: 1
+                                    }}
+                                />
+                                <button
+                                    onClick={handleSaveContactInfo}
+                                    disabled={saving}
+                                    style={{
+                                        padding: '5px 10px',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    {saving ? '儲存中...' : '儲存'}
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setIsEditing(false);
+                                        setEditContactInfo(user.contact_info || '');
+                                    }}
+                                    style={{
+                                        padding: '5px 10px',
+                                        backgroundColor: '#6c757d',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    取消
+                                </button>
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <p style={{ margin: 0, fontSize: '14px', color: '#888' }}>
+                                    聯絡資訊: <span style={{ color: user.contact_info ? '#333' : '#dc3545', fontWeight: 'bold' }}>
+                                        {user.contact_info || '未設定 (請點擊編輯設定)'}
+                                    </span>
+                                </p>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    style={{
+                                        padding: '2px 8px',
+                                        fontSize: '12px',
+                                        backgroundColor: 'transparent',
+                                        border: '1px solid #007bff',
+                                        color: '#007bff',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    編輯
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-                <button
-                    onClick={logout}
-                    style={{
-                        padding: '10px 20px',
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold'
-                    }}
-                >
-                    登出
-                </button>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
+                        onClick={logout}
+                        style={{
+                            padding: '8px 16px',
+                            backgroundColor: '#dc3545',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '14px'
+                        }}
+                    >
+                        登出
+                    </button>
+                </div>
             </div>
 
             {/* 我的上架商品 */}

@@ -435,3 +435,50 @@ function getItemContact(params) {
     return { status: "error", message: "取得聯絡資訊失敗: " + error.toString() };
   }
 }
+
+/**
+ * updateUserContact - 更新使用者聯絡資訊
+ * @param {string} userId - LINE User ID
+ * @param {string} contactInfo - 新的聯絡資訊
+ * @returns {Object} 更新後的使用者資料
+ */
+function updateUserContact(userId, contactInfo) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_USERS);
+    
+    if (!sheet) {
+      throw new Error("Users sheet not found");
+    }
+    
+    const data = sheet.getDataRange().getValues();
+    let userRow = -1;
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === userId) {
+        userRow = i + 1;
+        break;
+      }
+    }
+    
+    if (userRow === -1) {
+      throw new Error("User not found");
+    }
+    
+    // 更新聯絡資訊 (Column 4, Index 3)
+    sheet.getRange(userRow, 4).setValue(contactInfo);
+    
+    // 回傳更新後的資料
+    return {
+      line_user_id: data[userRow - 1][0],
+      display_name: data[userRow - 1][1],
+      picture_url: data[userRow - 1][2],
+      contact_info: contactInfo,
+      created_at: data[userRow - 1][4],
+      last_login: data[userRow - 1][5]
+    };
+    
+  } catch (error) {
+    Logger.log("Error in updateUserContact: " + error.toString());
+    throw error;
+  }
+}

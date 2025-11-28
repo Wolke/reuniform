@@ -14,7 +14,8 @@ export const ApiActions = {
     REGISTER_LIFF_USER: 'registerLiffUser', // New: for LIFF SDK authentication
     GET_MY_ITEMS: 'getMyItems',
     GET_MY_WAITLIST: 'getMyWaitlist',
-    GET_ITEM_CONTACT: 'getItemContact'
+    GET_ITEM_CONTACT: 'getItemContact',
+    UPDATE_CONTACT_INFO: 'updateContactInfo'
 };
 
 // API Helper Functions
@@ -97,3 +98,10 @@ export async function registerLiffUser(profile) {
     throw new Error(response.message || '無法註冊使用者');
 }
 
+export async function updateContactInfo(userId, contactInfo) {
+    const response = await callAPI(ApiActions.UPDATE_CONTACT_INFO, { userId, contactInfo });
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法更新聯絡資訊');
+}
