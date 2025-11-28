@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import ProtectedAction from './ProtectedAction';
 import { callAPI, ApiActions, fileToBase64 } from '../api';
 
 export default function Upload() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [analyzing, setAnalyzing] = useState(false);
@@ -79,7 +82,7 @@ export default function Upload() {
             // 呼叫後端 API (正式上架)
             const response = await callAPI(ApiActions.PUBLISH_ITEM, {
                 ...aiResult,
-                sellerId: 'user_001' // Mock User
+                sellerId: user?.line_user_id
             });
 
             if (response.status === 'success') {
@@ -112,164 +115,166 @@ export default function Upload() {
 
                 {/* 上傳區域 */}
                 <div className="bg-white rounded-lg shadow-md p-8">
-                    {!selectedFile ? (
-                        <div>
-                            <label
-                                htmlFor="photo-upload"
-                                className="block w-full"
-                            >
-                                <div className="border-4 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
-                                    <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <p className="text-lg font-semibold text-gray-700 mb-2">點擊上傳或拍照</p>
-                                    <p className="text-sm text-gray-500">支援 JPG, PNG 格式</p>
-                                </div>
-                            </label>
-                            <input
-                                id="photo-upload"
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                onChange={handleFileChange}
-                                className="hidden"
-                            />
-                        </div>
-                    ) : (
-                        <div>
-                            {/* 圖片預覽 */}
-                            <div className="mb-6">
-                                <img
-                                    src={preview}
-                                    alt="Preview"
-                                    className="w-full h-96 object-contain bg-gray-100 rounded-lg"
-                                />
-                                <button
-                                    onClick={() => {
-                                        setSelectedFile(null);
-                                        setPreview(null);
-                                        setAiResult(null);
-                                        setError(null);
-                                    }}
-                                    className="mt-4 text-sm text-red-600 hover:text-red-800"
+                    <ProtectedAction>
+                        {!selectedFile ? (
+                            <div>
+                                <label
+                                    htmlFor="photo-upload"
+                                    className="block w-full"
                                 >
-                                    重新選擇
-                                </button>
-                            </div>
-
-                            {/* AI 分析中 */}
-                            {analyzing && (
-                                <div className="text-center py-8">
-                                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
-                                    <p className="text-lg font-semibold text-gray-700">AI 正在分析您的制服...</p>
-                                    <p className="text-sm text-gray-500 mt-2">請稍候片刻</p>
-                                </div>
-                            )}
-
-                            {/* 錯誤訊息 */}
-                            {error && (
-                                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* AI 分析結果 (可編輯) */}
-                            {aiResult && !analyzing && (
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-800 mb-4">✨ 確認並編輯資訊</h3>
-
-                                    <div className="space-y-4 mb-6">
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">學校</label>
-                                            <input
-                                                type="text"
-                                                value={aiResult.school}
-                                                onChange={(e) => handleInputChange('school', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">類型</label>
-                                                <input
-                                                    type="text"
-                                                    value={aiResult.type}
-                                                    onChange={(e) => handleInputChange('type', e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">尺寸</label>
-                                                <input
-                                                    type="text"
-                                                    value={aiResult.size}
-                                                    onChange={(e) => handleInputChange('size', e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">性別</label>
-                                                <select
-                                                    value={aiResult.gender}
-                                                    onChange={(e) => handleInputChange('gender', e.target.value)}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                >
-                                                    <option value="U">不拘</option>
-                                                    <option value="M">男</option>
-                                                    <option value="F">女</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-semibold text-gray-700 mb-1">狀況評分 (1-5)</label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="5"
-                                                    value={aiResult.condition}
-                                                    onChange={(e) => handleInputChange('condition', parseInt(e.target.value))}
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">建議售價/條件</label>
-                                            <input
-                                                type="text"
-                                                value={aiResult.conditions}
-                                                onChange={(e) => handleInputChange('conditions', e.target.value)}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-1">瑕疵說明</label>
-                                            <textarea
-                                                value={aiResult.defects}
-                                                onChange={(e) => handleInputChange('defects', e.target.value)}
-                                                rows={3}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
+                                    <div className="border-4 border-dashed border-gray-300 rounded-lg p-12 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors">
+                                        <svg className="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        <p className="text-lg font-semibold text-gray-700 mb-2">點擊上傳或拍照</p>
+                                        <p className="text-sm text-gray-500">支援 JPG, PNG 格式</p>
                                     </div>
-
-                                    {/* 確認按鈕 */}
+                                </label>
+                                <input
+                                    id="photo-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    capture="environment"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                            </div>
+                        ) : (
+                            <div>
+                                {/* 圖片預覽 */}
+                                <div className="mb-6">
+                                    <img
+                                        src={preview}
+                                        alt="Preview"
+                                        className="w-full h-96 object-contain bg-gray-100 rounded-lg"
+                                    />
                                     <button
-                                        onClick={handleConfirm}
-                                        disabled={publishing}
-                                        className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all ${publishing ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        onClick={() => {
+                                            setSelectedFile(null);
+                                            setPreview(null);
+                                            setAiResult(null);
+                                            setError(null);
+                                        }}
+                                        className="mt-4 text-sm text-red-600 hover:text-red-800"
                                     >
-                                        {publishing ? '上架中...' : '確認並上架'}
+                                        重新選擇
                                     </button>
                                 </div>
-                            )}
-                        </div>
-                    )}
+
+                                {/* AI 分析中 */}
+                                {analyzing && (
+                                    <div className="text-center py-8">
+                                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                                        <p className="text-lg font-semibold text-gray-700">AI 正在分析您的制服...</p>
+                                        <p className="text-sm text-gray-500 mt-2">請稍候片刻</p>
+                                    </div>
+                                )}
+
+                                {/* 錯誤訊息 */}
+                                {error && (
+                                    <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
+                                        {error}
+                                    </div>
+                                )}
+
+                                {/* AI 分析結果 (可編輯) */}
+                                {aiResult && !analyzing && (
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-800 mb-4">✨ 確認並編輯資訊</h3>
+
+                                        <div className="space-y-4 mb-6">
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">學校</label>
+                                                <input
+                                                    type="text"
+                                                    value={aiResult.school}
+                                                    onChange={(e) => handleInputChange('school', e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-1">類型</label>
+                                                    <input
+                                                        type="text"
+                                                        value={aiResult.type}
+                                                        onChange={(e) => handleInputChange('type', e.target.value)}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-1">尺寸</label>
+                                                    <input
+                                                        type="text"
+                                                        value={aiResult.size}
+                                                        onChange={(e) => handleInputChange('size', e.target.value)}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-1">性別</label>
+                                                    <select
+                                                        value={aiResult.gender}
+                                                        onChange={(e) => handleInputChange('gender', e.target.value)}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    >
+                                                        <option value="U">不拘</option>
+                                                        <option value="M">男</option>
+                                                        <option value="F">女</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-1">狀況評分 (1-5)</label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="5"
+                                                        value={aiResult.condition}
+                                                        onChange={(e) => handleInputChange('condition', parseInt(e.target.value))}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">建議售價/條件</label>
+                                                <input
+                                                    type="text"
+                                                    value={aiResult.conditions}
+                                                    onChange={(e) => handleInputChange('conditions', e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1">瑕疵說明</label>
+                                                <textarea
+                                                    value={aiResult.defects}
+                                                    onChange={(e) => handleInputChange('defects', e.target.value)}
+                                                    rows={3}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* 確認按鈕 */}
+                                        <button
+                                            onClick={handleConfirm}
+                                            disabled={publishing}
+                                            className={`w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:from-blue-600 hover:to-blue-700 transition-all ${publishing ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                        >
+                                            {publishing ? '上架中...' : '確認並上架'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </ProtectedAction>
                 </div>
             </div>
         </div>

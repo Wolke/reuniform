@@ -7,6 +7,10 @@
 const OPENAI_API_KEY = PropertiesService.getScriptProperties().getProperty("OPENAI_API_KEY");
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
+// LINE Login Configuration (used by LineAuthHelper.gs)
+const LINE_CHANNEL_ID = PropertiesService.getScriptProperties().getProperty("LINE_CHANNEL_ID");
+const LINE_CHANNEL_SECRET = PropertiesService.getScriptProperties().getProperty("LINE_CHANNEL_SECRET");
+
 // Sheet 名稱
 const SHEET_ITEMS = "Items";
 const SHEET_WAITLIST = "Waitlist";
@@ -45,6 +49,18 @@ function doPost(e) {
         break;
       case "getRecentWaitlist":
         response = getRecentWaitlist();
+        break;
+      case "verifyLineLogin":
+        response = verifyLineLogin(params);
+        break;
+      case "getMyItems":
+        response = getMyItems(params);
+        break;
+      case "getMyWaitlist":
+        response = getMyWaitlist(params);
+        break;
+      case "getItemContact":
+        response = getItemContact(params);
         break;
       default:
         response = {
@@ -655,4 +671,6 @@ function testFullFlow() {
   }
 }
 
-
+// ==================== Note: LINE Login Functions ====================
+// LINE Login related functions have been moved to LineAuthHelper.gs
+// Please ensure LineAuthHelper.gs is included in your Apps Script project

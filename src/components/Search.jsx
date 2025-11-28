@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import ProtectedAction from './ProtectedAction';
 import ItemCard from './ItemCard';
 import { callAPI, ApiActions } from '../api';
 
 export default function Search() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [query, setQuery] = useState(searchParams.get('q') || '');
     const [results, setResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -52,7 +55,7 @@ export default function Search() {
             school: intent.school,
             type: intent.type,
             size: intent.size_approx,
-            requesterId: 'user_001'
+            requesterId: user?.line_user_id
         });
 
         if (response.status === 'success') {
@@ -137,12 +140,22 @@ export default function Search() {
                                 </p>
 
                                 {suggestWaitlist && (
-                                    <button
-                                        onClick={handleAddToWaitlist}
-                                        className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-yellow-600 hover:to-orange-600 transition-all inline-flex items-center gap-2"
+                                    <ProtectedAction
+                                        fallback={
+                                            <div style={{ marginTop: '20px' }}>
+                                                <p style={{ marginBottom: '15px', color: '#666' }}>
+                                                    需要登入才能加入預約清單
+                                                </p>
+                                            </div>
+                                        }
                                     >
-                                        🔔 加入缺貨預約清單
-                                    </button>
+                                        <button
+                                            onClick={handleAddToWaitlist}
+                                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-yellow-600 hover:to-orange-600 transition-all inline-flex items-center gap-2"
+                                        >
+                                            🔔 加入缺貨預約清單
+                                        </button>
+                                    </ProtectedAction>
                                 )}
                             </div>
                         )}

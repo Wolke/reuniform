@@ -9,7 +9,11 @@ export const ApiActions = {
     SEARCH_ITEMS: 'searchItems',
     ADD_TO_WAITLIST: 'addToWaitlist',
     GET_RECENT_ITEMS: 'getRecentItems',
-    GET_RECENT_WAITLIST: 'getRecentWaitlist'
+    GET_RECENT_WAITLIST: 'getRecentWaitlist',
+    VERIFY_LINE_LOGIN: 'verifyLineLogin',
+    GET_MY_ITEMS: 'getMyItems',
+    GET_MY_WAITLIST: 'getMyWaitlist',
+    GET_ITEM_CONTACT: 'getItemContact'
 };
 
 // API Helper Functions
@@ -45,4 +49,41 @@ export function fileToBase64(file) {
         reader.onload = () => resolve(reader.result);
         reader.onerror = (error) => reject(error);
     });
+}
+
+// LINE Login API Functions
+export async function verifyLineLogin(authorizationCode) {
+    const response = await callAPI(ApiActions.VERIFY_LINE_LOGIN, {
+        code: authorizationCode,
+        redirect_uri: import.meta.env.VITE_LINE_CALLBACK_URL
+    });
+
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || 'LINE 登入驗證失敗');
+}
+
+export async function getMyItems(userId) {
+    const response = await callAPI(ApiActions.GET_MY_ITEMS, { userId });
+    if (response.status === 'success') {
+        return response.data || [];
+    }
+    throw new Error(response.message || '無法取得商品列表');
+}
+
+export async function getMyWaitlist(userId) {
+    const response = await callAPI(ApiActions.GET_MY_WAITLIST, { userId });
+    if (response.status === 'success') {
+        return response.data || [];
+    }
+    throw new Error(response.message || '無法取得預約列表');
+}
+
+export async function getItemContact(itemId, userId) {
+    const response = await callAPI(ApiActions.GET_ITEM_CONTACT, { itemId, userId });
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法取得聯絡資訊');
 }

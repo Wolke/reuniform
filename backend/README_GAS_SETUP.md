@@ -44,24 +44,24 @@ id | requester_id | target_school | target_type | target_size | status | created
 | wait_001 | user_003 | 海山國小 | dress | 130 | active | 2025-10-05 |
 | wait_002 | user_004 | 光復國小 | sport_top | 150 | active | 2025-10-06 |
 
-### 2.3 Users 工作表（使用者）
+### 2.3 Users 工作表（使用者 - LINE Login）
 
 1. 再次點擊 **「+」** 新增工作表
 2. 命名為 **「Users」**
-3. 在第一列輸入標題（A1 到 C1）：
+3. 在第一列輸入標題（A1 到 F1）：
 
 ```
-uid | name | contact_info
+line_user_id | display_name | picture_url | contact_info | created_at | last_login
 ```
 
-4. 填入 Mock Data：
+4. **說明**：此工作表用於儲存 LINE Login 使用者資訊，系統會自動新增和更新資料。
 
-| A | B | C |
-|---|---|---|
-| user_001 | 林爸爸 | Line: lin_papa |
-| user_002 | 陳媽媽 | Line: chen_mama |
-| user_003 | 王小明 | Line: wang_xm |
-| user_004 | 李美麗 | Email: lee@example.com |
+5. 手動填入測試資料（可選）：
+
+| A | B | C | D | E | F |
+|---|---|---|---|---|---|
+| U1234567890abcdef | 林爸爸 | https://... | Line: lin_papa | 2025-11-01 | 2025-11-27 |
+| U0987654321fedcba | 陳媽媽 | https://... | Line: chen_mama | 2025-11-02 | 2025-11-26 |
 
 ## 步驟 3: 建立 Apps Script 專案
 
@@ -70,7 +70,31 @@ uid | name | contact_info
 3. 刪除預設的 `function myFunction() {}` 程式碼
 4. 複製 `Code.gs` 的完整內容並貼上
 
-## 步驟 4: 設定 Gemini API Key
+## 步驟 4: 設定 API Keys 和 LINE Login
+
+### 4.1 OpenAI API Key
+
+1. 前往 [OpenAI Platform](https://platform.openai.com/api-keys)
+2. 登入並點擊「Create new secret key」取得 API Key
+3. 在 Apps Script 編輯器中，點擊左側的 **「專案設定」**（齒輪圖示）
+4. 滾動到 **「指令碼屬性」** 區段
+5. 點擊 **「新增指令碼屬性」**，新增：
+   - 屬性名稱：`OPENAI_API_KEY`
+   - 值：您的 OpenAI API Key（sk-...）
+
+### 4.2 LINE Login 設定
+
+1. 參考 `LINE_LOGIN_SETUP.md` 檔案完成 LINE Developers Console 設定
+2. 取得 LINE Channel ID 和 Channel Secret
+3. 在 **「指令碼屬性」** 中新增以下兩個屬性：
+   - 屬性名稱：`LINE_CHANNEL_ID`，值：您的 Channel ID（例如：2008583001）
+   - 屬性名稱：`LINE_CHANNEL_SECRET`，值：您的 Channel Secret
+
+### 4.3 Cloudinary 設定（如果使用圖片上傳）
+
+參考 `CloudinaryHelper.gs` 檔案設定 Cloudinary 相關屬性。
+
+## 步驟 5: 設定 Gemini API Key
 
 1. 前往 [Google AI Studio](https://aistudio.google.com/app/apikey)
 2. 點擊「Create API Key」取得 Gemini API Key
@@ -83,9 +107,9 @@ uid | name | contact_info
    const GEMINI_API_KEY = "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXX";
    ```
 
-## 步驟 5: 儲存並部署
+## 步驟 6: 儲存並部署
 
-### 5.1 儲存專案
+### 6.1 儲存專案
 
 1. 點擊上方的 **「專案設定」**（齒輪圖示）
 2. 將專案命名為 **「Re:Uniform Backend」**
