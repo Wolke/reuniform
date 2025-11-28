@@ -15,7 +15,9 @@ function ContactInfoReminder() {
   const location = useLocation();
 
   useEffect(() => {
-    if (user && !user.contact_info && location.pathname !== '/profile') {
+    // Only check if user exists AND contact_info property exists (meaning backend sync is done)
+    // AND contact_info is empty
+    if (user && 'contact_info' in user && !user.contact_info && location.pathname !== '/profile') {
       // Simple confirm dialog for MVP
       if (window.confirm('您尚未設定聯絡資訊，這會影響買家與您聯繫。是否立即前往設定？')) {
         navigate('/profile');

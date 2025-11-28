@@ -379,6 +379,30 @@ function runQuickLineAuthTests() {
   testGetUserById();
   
   Logger.log("\n========================================");
-  Logger.log("Quick Tests Completed!");
   Logger.log("========================================");
+}
+
+/**
+ * 測試：取得特定使用者的資料
+ * 用於除錯特定 User ID 的問題
+ */
+function testFetchSpecificUser() {
+  const userId = "U9e5f75d63d7295de0ab7e79d0acf9bee";
+  Logger.log("=== Fetching Data for User: " + userId + " ===");
+  
+  try {
+    const user = getUserById(userId);
+    
+    if (user) {
+      Logger.log("✅ User Found:");
+      Logger.log(JSON.stringify(user, null, 2));
+    } else {
+      Logger.log("❌ User Not Found");
+    }
+    
+    return user;
+  } catch (error) {
+    Logger.log("❌ Error: " + error.toString());
+    return null;
+  }
 }
