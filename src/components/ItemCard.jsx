@@ -1,30 +1,10 @@
-import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import ProtectedAction from './ProtectedAction';
+import ContactInfoButton from './ContactInfoButton';
 import { getItemContact } from '../api';
 
 export default function ItemCard({ item }) {
     console.log('ItemCard item:', item);
-    const { user, isAuthenticated } = useAuth();
-    const [showContact, setShowContact] = useState(false);
-    const [contactInfo, setContactInfo] = useState(null);
-    const [loading, setLoading] = useState(false);
-
-    const handleViewContact = async () => {
-        if (!isAuthenticated || !user) return;
-
-        setLoading(true);
-        try {
-            const contact = await getItemContact(item.id, user.line_user_id);
-            setContactInfo(contact);
-            setShowContact(true);
-        } catch (error) {
-            console.error('Failed to get contact info:', error);
-            alert('無法取得聯絡資訊：' + error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { user } = useAuth();
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
@@ -91,35 +71,9 @@ export default function ItemCard({ item }) {
 
                 {/* 聯絡資訊區域 - 需要登入 */}
                 <div className="border-t pt-3">
-                    <ProtectedAction
-                        fallback={
-                            <div className="text-center">
-                                <p className="text-xs text-gray-500 mb-2">登入後可查看聯絡方式</p>
-                            </div>
-                        }
-                    >
-                        {!showContact ? (
-                            <button
-                                onClick={handleViewContact}
-                                disabled={loading}
-                                className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded text-sm font-semibold transition-colors disabled:opacity-50"
-                            >
-                                {loading ? '載入中...' : '📞 查看聯絡方式'}
-                            </button>
-                        ) : (
-                            <div className="bg-blue-50 p-3 rounded">
-                                <p className="text-xs font-semibold text-gray-700 mb-1">賣家聯絡方式：</p>
-                                {contactInfo && (
-                                    <div className="text-sm text-gray-800">
-                                        <p>👤 {contactInfo.seller_name}</p>
-                                        {contactInfo.contact_info && (
-                                            <p>📱 {contactInfo.contact_info}</p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </ProtectedAction>
+                    <ContactInfoButton
+                        fetchContact={() => getItemContact(item.id, user?.line_user_id)}
+                    />
                 </div>
             </div>
         </div>

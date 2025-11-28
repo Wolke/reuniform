@@ -15,6 +15,7 @@ export const ApiActions = {
     GET_MY_ITEMS: 'getMyItems',
     GET_MY_WAITLIST: 'getMyWaitlist',
     GET_ITEM_CONTACT: 'getItemContact',
+    GET_WAITLIST_CONTACT: 'getWaitlistContact',
     UPDATE_CONTACT_INFO: 'updateContactInfo'
 };
 
@@ -84,6 +85,14 @@ export async function getMyWaitlist(userId) {
 
 export async function getItemContact(itemId, userId) {
     const response = await callAPI(ApiActions.GET_ITEM_CONTACT, { itemId, userId });
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法取得聯絡資訊');
+}
+
+export async function getWaitlistContact(requestId, userId) {
+    const response = await callAPI(ApiActions.GET_WAITLIST_CONTACT, { requestId, userId });
     if (response.status === 'success') {
         return response.data;
     }

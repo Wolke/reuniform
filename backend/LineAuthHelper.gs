@@ -388,56 +388,69 @@ function getMyWaitlist(params) {
 
 /**
  * getItemContact - 取得商品賣家的聯絡資訊（需要登入）
- * @param {Object} params - { itemId: string, userId: string }
- * @returns {Object} { status: string, data?: Object, message?: string }
  */
 function getItemContact(params) {
+  return getContactFromSheet(params.itemId, params.userId, "Items", "商品");
+}
+
+/**
+ * getWaitlistContact - 取得預約需求者的聯絡資訊（需要登入）
+ */
+function getWaitlistContact(params) {
+  return getContactFromSheet(params.requestId, params.userId, "Waitlist", "預約需求");
+}
+
+/**
+ * getContactFromSheet - 共用的聯絡資訊取得邏輯
+ * @param {string} targetId - 商品 ID 或 需求 ID
+ * @param {string} userId - 查詢者的 User ID (用於驗證登入)
+ * @param {string} sheetName - "Items" 或 "Waitlist"
+ * @param {string} itemName - 錯誤訊息用的名稱 (e.g. "商品", "預約需求")
+ */
+function getContactFromSheet(targetId, userId, sheetName, itemName) {
   try {
-    const itemId = params.itemId;
-    const userId = params.userId;
-    
-    if (!itemId || !userId) {
+    if (!targetId || !userId) {
       return { status: "error", message: "缺少必要參數" };
     }
     
-    // 1. 從 Items Sheet 找到商品
-    const itemsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Items");
+    // 1. 從指定 Sheet 找到目標
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
     
-    if (!itemsSheet) {
-      return { status: "error", message: "Items sheet not found" };
+    if (!sheet) {
+      return { status: "error", message: `${sheetName} sheet not found` };
     }
     
-    const itemsData = itemsSheet.getDataRange().getValues();
+    const data = sheet.getDataRange().getValues();
     
-    let sellerId = null;
-    for (let i = 1; i < itemsData.length; i++) {
-      if (itemsData[i][0] === itemId) {
-        sellerId = itemsData[i][1];
+    let targetUserId = null;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === targetId) {
+        targetUserId = data[i][1]; // 假設 Owner ID 都在第二欄 (Index 1)
         break;
       }
     }
     
-    if (!sellerId) {
-      return { status: "error", message: "找不到該商品" };
+    if (!targetUserId) {
+      return { status: "error", message: `找不到該${itemName}` };
     }
     
-    // 2. 從 Users Sheet 取得賣家資訊
-    const sellerInfo = getUserById(sellerId);
+    // 2. 從 Users Sheet 取得使用者資訊
+    const userInfo = getUserById(targetUserId);
     
-    if (!sellerInfo) {
-      return { status: "error", message: "找不到賣家資訊" };
+    if (!userInfo) {
+      return { status: "error", message: "找不到使用者資訊" };
     }
     
     return {
       status: "success",
       data: {
-        seller_name: sellerInfo.display_name,
-        contact_info: sellerInfo.contact_info || "賣家未提供聯絡資訊"
+        seller_name: userInfo.display_name,
+        contact_info: userInfo.contact_info || "使用者未提供聯絡資訊"
       }
     };
     
   } catch (error) {
-    Logger.log("Error in getItemContact: " + error.toString());
+    Logger.log(`Error in getContactFromSheet (${sheetName}): ` + error.toString());
     return { status: "error", message: "取得聯絡資訊失敗: " + error.toString() };
   }
 }

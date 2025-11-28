@@ -65,6 +65,9 @@ function doPost(e) {
       case "getItemContact":
         response = getItemContact(params);
         break;
+      case "getWaitlistContact":
+        response = getWaitlistContact(params);
+        break;
       case "updateContactInfo":
         response = updateContactInfo(params);
         break;

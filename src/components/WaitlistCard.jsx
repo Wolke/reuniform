@@ -1,4 +1,10 @@
+import { useAuth } from '../contexts/AuthContext';
+import ContactInfoButton from './ContactInfoButton';
+import { getWaitlistContact } from '../api';
+
 export default function WaitlistCard({ req }) {
+    const { user } = useAuth();
+
     return (
         <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
             {/* 標題 */}
@@ -33,12 +39,12 @@ export default function WaitlistCard({ req }) {
             </div>
 
             {/* 聯絡按鈕 */}
-            <button
-                onClick={() => alert('請實作聯絡功能')}
-                className="mt-4 w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-blue-700 transition-all"
-            >
-                📱 有相關制服，聯絡需求者
-            </button>
+            <div className="mt-4">
+                <ContactInfoButton
+                    fetchContact={() => getWaitlistContact(req.id, user?.line_user_id)}
+                    label="📱 有相關制服，聯絡需求者"
+                />
+            </div>
         </div>
     );
 }
