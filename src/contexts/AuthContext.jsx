@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import * as LiffAuth from '../liff-auth';
 
 const AuthContext = createContext(null);
 
@@ -13,59 +14,73 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liffReady, setLiffReady] = useState(false);
 
   useEffect(() => {
-    // 從 localStorage 恢復使用者資訊
-    const storedUser = localStorage.getItem('line_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error('Failed to parse stored user:', e);
-        localStorage.removeItem('line_user');
-      }
-    }
-    setLoading(false);
+    initializeLiff();
   }, []);
 
-  const login = () => {
-    const channelId = import.meta.env.VITE_LINE_CHANNEL_ID;
-    const callbackUrl = import.meta.env.VITE_LINE_CALLBACK_URL;
-    const state = generateRandomState();
-    const nonce = generateRandomNonce();
+  const initializeLiff = async () => {
+    try {
+      setLoading(true);
 
-    // 儲存 state 和 nonce 用於驗證
-    sessionStorage.setItem('line_state', state);
-    sessionStorage.setItem('line_nonce', nonce);
+      // Initialize LIFF SDK
+      const success = await LiffAuth.initializeLIFF();
 
-    // 建構 LINE Login URL
-    const lineAuthUrl = new URL('https://access.line.me/oauth2/v2.1/authorize');
-    lineAuthUrl.searchParams.set('response_type', 'code');
-    lineAuthUrl.searchParams.set('client_id', channelId);
-    lineAuthUrl.searchParams.set('redirect_uri', callbackUrl);
-    lineAuthUrl.searchParams.set('state', state);
-    lineAuthUrl.searchParams.set('scope', 'profile openid');
-    lineAuthUrl.searchParams.set('nonce', nonce);
+      if (!success) {
+        console.error('LIFF initialization failed');
+        setLoading(false);
+        return;
+      }
 
-    // 導向 LINE Login
-    window.location.href = lineAuthUrl.toString();
+      setLiffReady(true);
+
+      // Check if user is logged in
+      if (LiffAuth.isLoggedIn()) {
+        const profile = await LiffAuth.getProfile();
+        if (profile) {
+          setUser(profile);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to initialize LIFF:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async () => {
+    try {
+      if (!liffReady) {
+        throw new Error('LIFF is not ready. Please wait...');
+      }
+
+      const profile = await LiffAuth.login();
+
+      // If login() returns null, it means redirection happened
+      // Profile will be set after redirect
+      if (profile) {
+        setUser(profile);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
+    LiffAuth.logout();
     setUser(null);
-    localStorage.removeItem('line_user');
-    sessionStorage.removeItem('line_state');
-    sessionStorage.removeItem('line_nonce');
   };
 
   const saveUser = (userData) => {
     setUser(userData);
-    localStorage.setItem('line_user', JSON.stringify(userData));
   };
 
   const value = {
     user,
     loading,
+    liffReady,
     login,
     logout,
     saveUser,
@@ -74,12 +89,3 @@ export const AuthProvider = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-// Helper functions
-function generateRandomState() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-function generateRandomNonce() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}

@@ -1,3 +1,0 @@
-id,seller_id,school,type,gender,size,conditions,condition_score,defects,status,image_url,created_at
-ITEM001,user_001,新北市板橋區海山國小,sport_top_short,F,140,150元,4,無明顯瑕疵,published,https://res.cloudinary.com/daq5iuktq/image/upload/v1764221637/tw-11134207-23020-wz9ykk8olqnv37_dea3xf.jpg,2025-10-01
-ITEM002,user_002,新北市板橋區光復國小,uniform_bottom_long,M,M,200元,5,無,published,https://res.cloudinary.com/daq5iuktq/image/upload/v1764221724/P3175066167035_ggfwy6.webp,2025-10-02

@@ -201,6 +201,43 @@ function saveOrUpdateUser(profile) {
 }
 
 /**
+ * registerLiffUser - LIFF SDK 專用：註冊或更新使用者
+ * @param {Object} params - { profile: Object }
+ * @returns {Object} { status: string, data?: Object, message?: string }
+ */
+function registerLiffUser(params) {
+  try {
+    const profile = params.profile;
+    
+    if (!profile || !profile.line_user_id) {
+      return { status: "error", message: "缺少使用者資料" };
+    }
+    
+    // 轉換 LIFF profile 格式為內部格式
+    const lineProfile = {
+      userId: profile.line_user_id,
+      displayName: profile.display_name,
+      pictureUrl: profile.picture_url,
+      statusMessage: profile.status_message || ""
+    };
+    
+    // 使用現有的 saveOrUpdateUser 函數
+    const userData = saveOrUpdateUser(lineProfile);
+    
+    return {
+      status: "success",
+      data: userData,
+      message: "使用者註冊成功"
+    };
+    
+  } catch (error) {
+    Logger.log("Error in registerLiffUser: " + error.toString());
+    return { status: "error", message: "註冊失敗: " + error.toString() };
+  }
+}
+
+
+/**
  * getUserById - 根據 LINE User ID 取得使用者資訊
  * @param {string} userId - LINE User ID
  * @returns {Object|null} 使用者資料或 null

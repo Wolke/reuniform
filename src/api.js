@@ -11,6 +11,7 @@ export const ApiActions = {
     GET_RECENT_ITEMS: 'getRecentItems',
     GET_RECENT_WAITLIST: 'getRecentWaitlist',
     VERIFY_LINE_LOGIN: 'verifyLineLogin',
+    REGISTER_LIFF_USER: 'registerLiffUser', // New: for LIFF SDK authentication
     GET_MY_ITEMS: 'getMyItems',
     GET_MY_WAITLIST: 'getMyWaitlist',
     GET_ITEM_CONTACT: 'getItemContact'
@@ -87,3 +88,12 @@ export async function getItemContact(itemId, userId) {
     }
     throw new Error(response.message || '無法取得聯絡資訊');
 }
+
+export async function registerLiffUser(profile) {
+    const response = await callAPI(ApiActions.REGISTER_LIFF_USER, { profile });
+    if (response.status === 'success') {
+        return response.data;
+    }
+    throw new Error(response.message || '無法註冊使用者');
+}
+

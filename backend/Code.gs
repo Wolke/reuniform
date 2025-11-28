@@ -53,6 +53,9 @@ function doPost(e) {
       case "verifyLineLogin":
         response = verifyLineLogin(params);
         break;
+      case "registerLiffUser":
+        response = registerLiffUser(params);
+        break;
       case "getMyItems":
         response = getMyItems(params);
         break;
