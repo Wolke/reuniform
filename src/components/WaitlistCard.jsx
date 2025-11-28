@@ -1,6 +1,7 @@
 import { useAuth } from '../contexts/AuthContext';
 import ContactInfoButton from './ContactInfoButton';
 import { getWaitlistContact } from '../api';
+import { UNIFORM_TYPE_MAP } from '../constants';
 
 export default function WaitlistCard({ req }) {
     const { user } = useAuth();
@@ -53,21 +54,7 @@ export default function WaitlistCard({ req }) {
 function getTypeLabel(type) {
     if (!type) return '不限';
     const cleanType = type.trim();
-    const typeMap = {
-        'sport_top_short': '運動短袖',
-        'sport_top_long': '運動長袖',
-        'sport_bottom_short': '運動短褲',
-        'sport_bottom_long': '運動長褲',
-        'uniform_top_short': '制服短袖',
-        'uniform_top_long': '制服長袖',
-        'uniform_bottom_short': '制服短褲',
-        'uniform_bottom_long': '制服長褲',
-        'uniform_skirt': '裙子',
-        'dress': '洋裝',
-        'jacket': '外套'
-    };
-
-    return typeMap[cleanType] || cleanType;
+    return UNIFORM_TYPE_MAP[cleanType] || cleanType;
 }
 
 // Helper function to format date

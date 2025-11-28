@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { UNIFORM_TYPE_MAP } from '../constants';
 
 export default function ItemForm({ initialData, onSubmit, submitLabel = '確認並上架', loading = false }) {
     const [formData, setFormData] = useState({
@@ -48,12 +49,18 @@ export default function ItemForm({ initialData, onSubmit, submitLabel = '確認�
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">類型</label>
-                        <input
-                            type="text"
+                        <select
                             value={formData.type}
                             onChange={(e) => handleChange('type', e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
+                        >
+                            <option value="">請選擇類型</option>
+                            {Object.entries(UNIFORM_TYPE_MAP).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1">尺寸</label>
