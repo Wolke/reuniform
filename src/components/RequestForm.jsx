@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { callAPI, ApiActions, getMyWaitlist, updateWaitlist } from '../api';
+import ProtectedAction from './ProtectedAction';
 
 const UNIFORM_TYPES = [
     { value: 'any', label: '不拘' },
@@ -157,78 +158,80 @@ export default function RequestForm() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-2">學校名稱</label>
-                            <input
-                                type="text"
-                                name="school"
-                                value={formData.school}
-                                onChange={handleChange}
-                                placeholder="例如：海山國小"
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-2">制服種類</label>
-                            <select
-                                name="type"
-                                value={formData.type}
-                                onChange={handleChange}
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">請選擇種類</option>
-                                {UNIFORM_TYPES.map(type => (
-                                    <option key={type.value} value={type.value}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-2">尺寸</label>
-                            <input
-                                type="text"
-                                name="size"
-                                value={formData.size}
-                                onChange={handleChange}
-                                placeholder="例如：140, M, 30腰"
-                                required
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                        </div>
-
-                        {isEditing && (
+                    <ProtectedAction>
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-gray-700 font-medium mb-2">狀態</label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
+                                <label className="block text-gray-700 font-medium mb-2">學校名稱</label>
+                                <input
+                                    type="text"
+                                    name="school"
+                                    value={formData.school}
                                     onChange={handleChange}
+                                    placeholder="例如：海山國小"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-gray-700 font-medium mb-2">制服種類</label>
+                                <select
+                                    name="type"
+                                    value={formData.type}
+                                    onChange={handleChange}
+                                    required
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 >
-                                    <option value="active">等待中</option>
-                                    <option value="completed">已完成</option>
-                                    <option value="cancelled">已取消</option>
+                                    <option value="">請選擇種類</option>
+                                    {UNIFORM_TYPES.map(type => (
+                                        <option key={type.value} value={type.value}>
+                                            {type.label}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
-                        )}
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className={`w-full py-3 rounded-lg font-bold text-white transition-colors ${loading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700'
-                                }`}
-                        >
-                            {loading ? '處理中...' : (isEditing ? '儲存變更' : '送出需求')}
-                        </button>
-                    </form>
+                            <div>
+                                <label className="block text-gray-700 font-medium mb-2">尺寸</label>
+                                <input
+                                    type="text"
+                                    name="size"
+                                    value={formData.size}
+                                    onChange={handleChange}
+                                    placeholder="例如：140, M, 30腰"
+                                    required
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            {isEditing && (
+                                <div>
+                                    <label className="block text-gray-700 font-medium mb-2">狀態</label>
+                                    <select
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="active">等待中</option>
+                                        <option value="completed">已完成</option>
+                                        <option value="cancelled">已取消</option>
+                                    </select>
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className={`w-full py-3 rounded-lg font-bold text-white transition-colors ${loading
+                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                                    }`}
+                            >
+                                {loading ? '處理中...' : (isEditing ? '儲存變更' : '送出需求')}
+                            </button>
+                        </form>
+                    </ProtectedAction>
                 </div>
             </div>
         </div>
