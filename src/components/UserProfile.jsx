@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getMyItems, getMyWaitlist, updateContactInfo } from '../api';
+import ItemCard from './ItemCard';
+import WaitlistCard from './WaitlistCard';
 
 function UserProfile() {
     const { user, logout, saveUser } = useAuth();
@@ -29,7 +31,15 @@ function UserProfile() {
                 getMyWaitlist(user.line_user_id)
             ]);
             setMyItems(items);
-            setMyWaitlist(waitlist);
+
+            // Normalize waitlist data to handle both old (target_*) and new keys
+            const normalizedWaitlist = waitlist.map(item => ({
+                ...item,
+                school: item.school || item.target_school,
+                type: item.type || item.target_type,
+                size: item.size || item.target_size
+            }));
+            setMyWaitlist(normalizedWaitlist);
         } catch (error) {
             console.error('Failed to load user data:', error);
         } finally {
@@ -186,46 +196,12 @@ function UserProfile() {
                 ) : myItems.length > 0 ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
                         {myItems.map(item => (
-                            <div key={item.id} style={{
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                backgroundColor: 'white'
-                            }}>
-                                {item.image_url && (
-                                    <img src={item.image_url} alt={item.school} style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
-                                )}
-                                <div style={{ padding: '15px' }}>
-                                    <h4 style={{ margin: '0 0 10px 0' }}>{item.school}</h4>
-                                    <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-                                        {item.type} | {item.gender} | {item.size}
-                                    </p>
-                                    <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#06c755' }}>
-                                        {item.conditions}
-                                    </p>
-                                    <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>
-                                        狀態: {item.status === 'published' ? '已發布' : '草稿'}
-                                    </p>
-                                    <Link
-                                        to={`/edit-item/${item.id}`}
-                                        state={{ item }}
-                                        style={{
-                                            display: 'block',
-                                            textAlign: 'center',
-                                            marginTop: '10px',
-                                            padding: '8px',
-                                            backgroundColor: '#f8f9fa',
-                                            color: '#333',
-                                            textDecoration: 'none',
-                                            borderRadius: '4px',
-                                            fontSize: '14px',
-                                            border: '1px solid #ddd'
-                                        }}
-                                    >
-                                        編輯商品
-                                    </Link>
-                                </div>
-                            </div>
+                            <ItemCard
+                                key={item.id}
+                                item={item}
+                                showContactInfo={false}
+                                showEditButton={true}
+                            />
                         ))}
                     </div>
                 ) : (
@@ -239,42 +215,14 @@ function UserProfile() {
                 {loading ? (
                     <p>載入中...</p>
                 ) : myWaitlist.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
                         {myWaitlist.map(wait => (
-                            <div key={wait.id} style={{
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
-                                padding: '15px',
-                                backgroundColor: 'white'
-                            }}>
-                                <h4 style={{ margin: '0 0 10px 0' }}>{wait.target_school}</h4>
-                                <p style={{ margin: '5px 0', fontSize: '14px', color: '#666' }}>
-                                    類型: {wait.target_type} | 尺寸: {wait.target_size}
-                                </p>
-                                <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>
-                                    狀態: {wait.status === 'active' ? '等待中' : '已完成'}
-                                </p>
-                                <p style={{ margin: '5px 0', fontSize: '12px', color: '#999' }}>
-                                    建立時間: {wait.created_at}
-                                </p>
-                                <Link
-                                    to={`/edit-waitlist/${wait.id}`}
-                                    state={{ request: wait }}
-                                    style={{
-                                        display: 'inline-block',
-                                        marginTop: '10px',
-                                        padding: '4px 12px',
-                                        backgroundColor: '#f8f9fa',
-                                        color: '#333',
-                                        textDecoration: 'none',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        border: '1px solid #ddd'
-                                    }}
-                                >
-                                    編輯需求
-                                </Link>
-                            </div>
+                            <WaitlistCard
+                                key={wait.id}
+                                req={wait}
+                                showContactInfo={false}
+                                showEditButton={true}
+                            />
                         ))}
                     </div>
                 ) : (

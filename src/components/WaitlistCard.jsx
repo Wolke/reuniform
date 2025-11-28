@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ContactInfoButton from './ContactInfoButton';
 import { getWaitlistContact } from '../api';
 import { UNIFORM_TYPE_MAP } from '../constants';
 
-export default function WaitlistCard({ req }) {
+export default function WaitlistCard({ req, showContactInfo = true, showEditButton = false }) {
     const { user } = useAuth();
 
     return (
@@ -40,12 +41,24 @@ export default function WaitlistCard({ req }) {
             </div>
 
             {/* 聯絡按鈕 */}
-            <div className="mt-4">
-                <ContactInfoButton
-                    fetchContact={() => getWaitlistContact(req.id, user?.line_user_id)}
-                    label="📱 有相關制服，聯絡需求者"
-                />
-            </div>
+            {showContactInfo && (
+                <div className="mt-4">
+                    <ContactInfoButton
+                        fetchContact={() => getWaitlistContact(req.id, user?.line_user_id)}
+                    />
+                </div>
+            )}
+
+            {/* 編輯按鈕 */}
+            {showEditButton && (
+                <Link
+                    to={`/edit-waitlist/${req.id}`}
+                    state={{ request: req }}
+                    className="block text-center mt-4 p-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                >
+                    編輯需求
+                </Link>
+            )}
         </div>
     );
 }

@@ -366,9 +366,9 @@ function getMyWaitlist(params) {
         waitlist.push({
           id: row[0],
           requester_id: row[1],
-          target_school: row[2],
-          target_type: row[3],
-          target_size: row[4],
+          school: row[2],
+          type: row[3],
+          size: row[4],
           status: row[5],
           created_at: row[6]
         });

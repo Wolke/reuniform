@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ContactInfoButton from './ContactInfoButton';
 import { getItemContact } from '../api';
 import { UNIFORM_TYPE_MAP } from '../constants';
 
-export default function ItemCard({ item }) {
+export default function ItemCard({ item, showContactInfo = true, showEditButton = false }) {
     console.log('ItemCard item:', item);
     const { user } = useAuth();
 
@@ -71,11 +72,24 @@ export default function ItemCard({ item }) {
                 </div>
 
                 {/* 聯絡資訊區域 - 需要登入 */}
-                <div className="border-t pt-3">
-                    <ContactInfoButton
-                        fetchContact={() => getItemContact(item.id, user?.line_user_id)}
-                    />
-                </div>
+                {showContactInfo && (
+                    <div className="border-t pt-3">
+                        <ContactInfoButton
+                            fetchContact={() => getItemContact(item.id, user?.line_user_id)}
+                        />
+                    </div>
+                )}
+
+                {/* 編輯按鈕 */}
+                {showEditButton && (
+                    <Link
+                        to={`/edit-item/${item.id}`}
+                        state={{ item }}
+                        className="block text-center mt-2 p-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+                    >
+                        編輯商品
+                    </Link>
+                )}
             </div>
         </div>
     );
