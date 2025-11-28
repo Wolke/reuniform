@@ -5,5 +5,14 @@ import react from '@vitejs/plugin-react-swc'
 export default defineConfig({
   plugins: [react()],
   base: '/reuniform/',
+  server: {
+    // Allow ngrok and other tunneling services
+    allowedHosts: [
+      '.ngrok.io',
+      '.ngrok-free.app',
+      'localhost',
+    ],
+    // Alternatively, use 'all' to allow all hosts (less secure but convenient for dev)
+    // allowedHosts: 'all',
+  }
 })
-
