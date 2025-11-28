@@ -28,12 +28,20 @@ export default function Waitlist() {
             <div className="container mx-auto px-4">
                 {/* 標題 */}
                 <div className="mb-8">
-                    <button
-                        onClick={() => navigate('/')}
-                        className="text-gray-600 hover:text-gray-800 mb-4 flex items-center gap-2"
-                    >
-                        ← 返回首頁
-                    </button>
+                    <div className="flex justify-between items-center mb-4">
+                        <button
+                            onClick={() => navigate('/')}
+                            className="text-gray-600 hover:text-gray-800 flex items-center gap-2"
+                        >
+                            ← 返回首頁
+                        </button>
+                        <button
+                            onClick={() => navigate('/waitlist/new')}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            + 新增需求
+                        </button>
+                    </div>
                     <h1 className="text-3xl font-bold text-gray-800">預約需求</h1>
                     <p className="text-gray-600 mt-2">查看所有待媒合的制服需求</p>
                 </div>

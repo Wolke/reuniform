@@ -48,20 +48,18 @@ export default function Search() {
         navigate(`/search?q=${encodeURIComponent(query)}`);
     }
 
-    async function handleAddToWaitlist() {
+    function handleAddToWaitlist() {
         if (!intent) return;
 
-        const response = await callAPI(ApiActions.ADD_TO_WAITLIST, {
-            school: intent.school,
-            type: intent.type,
-            size: intent.size_approx,
-            requesterId: user?.line_user_id
+        navigate('/waitlist/new', {
+            state: {
+                initialData: {
+                    school: intent.school,
+                    type: intent.type, // Note: This might need mapping if intent.type is English key and we want Chinese, but RequestForm handles it best effort
+                    size_approx: intent.size_approx
+                }
+            }
         });
-
-        if (response.status === 'success') {
-            alert('✅ 已加入預約清單！當有符合的商品上架時，我們會通知您。');
-            navigate('/waitlist');
-        }
     }
 
     return (
