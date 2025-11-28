@@ -40,6 +40,8 @@ export const AuthProvider = ({ children }) => {
         const profile = await LiffAuth.getProfile();
         if (profile) {
           setUser(profile);
+          // Sync with backend to ensure data is up to date
+          LiffAuth.syncUser(profile);
         }
       }
     } catch (error) {

@@ -89,16 +89,8 @@ export async function login() {
         // Already logged in, get profile
         const profile = await getProfile();
         if (profile) {
-            // Save to backend Users sheet
-            try {
-                const { registerLiffUser } = await import('./api.js');
-                await registerLiffUser(profile);
-                console.log('✅ User registered/updated in backend');
-            } catch (apiError) {
-                console.error('Failed to register user in backend:', apiError);
-                // Don't fail login if backend fails
-            }
-
+            // Sync with backend
+            await syncUser(profile);
             saveLoginState(profile);
         }
         return profile;
@@ -222,4 +214,21 @@ function clearLoginState() {
     localStorage.removeItem(STORAGE_KEY.USER_PROFILE);
     localStorage.removeItem(STORAGE_KEY.EXPIRES_AT);
     console.log('✅ Login state cleared from local storage');
+}
+
+/**
+ * Sync user profile with backend
+ * @param {Object} profile User profile
+ */
+export async function syncUser(profile) {
+    if (!profile) return;
+
+    try {
+        const { registerLiffUser } = await import('./api.js');
+        await registerLiffUser(profile);
+        console.log('✅ User registered/updated in backend');
+    } catch (apiError) {
+        console.error('Failed to register user in backend:', apiError);
+        // Don't fail if backend fails, just log it
+    }
 }
